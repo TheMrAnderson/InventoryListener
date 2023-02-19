@@ -6,7 +6,7 @@ This is a part of the Inventory system for ClubAnderson
 
 ## Variables
 
-`DATAFOLDER`: Folder where the data is stored, including the app config as well as the inventory files
-`LOGTOPIC`: MQTT topic to send the event logs
-`INVENTORYCONSUMETOPIC`: MQTT topic to send an inventory consume events
-`MQTTSERVERADDRESS`: MQTT broker address eg. mqtt://19.168.0.1
+`DATAFOLDER`: Folder where the data is stored, including the app config as well as the inventory files<br/>
+`LOGTOPIC`: MQTT topic to send the event logs<br/>
+`INVENTORYCONSUMETOPIC`: MQTT topic to send an inventory consume events<br/>
+`MQTTSERVERADDRESS`: MQTT broker address eg. mqtt://19.168.0.1<br/>
