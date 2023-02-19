@@ -18,16 +18,14 @@ const verbose = async (message) => {
 }
 
 function createLogObject(message, err) {
-	console.log('Creating log object')
 	let obj = { Source: 'CA Inventory Listener', EventTime: new Date().toISOString(), Message: message, Error: err }
-	console.log(obj)
 	let objString = JSON.stringify(obj, null, 2)
 	return objString
 }
 
 async function sendData(objString) {
 	try {
-		g.mqttClient.publish('logs', objString, function (err) {
+		g.mqttClient.publish(g.logTopic, objString, function (err) {
 			if (err) {
 				console.log(err)
 			}

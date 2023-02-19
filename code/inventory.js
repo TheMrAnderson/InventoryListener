@@ -8,8 +8,8 @@ const InventoryType = {
 	Bulk: 1
 }
 
-const appConfigPath = '.inventory/config/'
-const dataFilePath = '.inventory/data/'
+const appConfigPath = g.dataFolder + 'config/'
+const dataFilePath = g.dataFolder
 const appConfigFilename = 'appconfig.json'
 const itemFileNameSuffix = '.json'
 

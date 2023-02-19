@@ -1,2 +1,6 @@
 global.appConfig
 global.mqttClient
+global.dataFolder
+global.logTopic
+global.inventoryConsumeTopic
+global.mqttServerAddress

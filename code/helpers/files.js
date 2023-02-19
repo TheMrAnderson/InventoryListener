@@ -6,7 +6,6 @@ let defaultEncoding = 'utf8'
 const readFile = async (fileName) => {
 	try {
 		const data = await fs.readFile(fileName, { encoding: defaultEncoding })
-		console.log(data)
 		return data
 	} catch (err) {
 		log.error(err)

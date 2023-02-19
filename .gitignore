@@ -1,5 +1,6 @@
 # Repo Specific
 .inventory
+.env
 
 # Logs
 logs
