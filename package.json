@@ -1,0 +1,16 @@
+{
+  "name": "inventorylistener",
+  "version": "0.0.1",
+  "description": "Listen for inventory events and respond accordingly",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "TheMrAnderson",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^4.3.7"
+  }
+}

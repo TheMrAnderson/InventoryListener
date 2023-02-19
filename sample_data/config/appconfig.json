@@ -1,0 +1,4 @@
+{
+  "Notifier": "telegram",
+  "StartingItemNumber": 1000
+}

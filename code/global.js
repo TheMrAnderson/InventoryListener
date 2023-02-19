@@ -1,0 +1,2 @@
+global.appConfig
+global.mqttClient
