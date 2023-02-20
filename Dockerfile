@@ -1,12 +1,12 @@
-FROM node:latest
+FROM node
 
 WORKDIR /usr/src/app
-COPY package*.json .
+COPY ./package*.json /usr/src/app
 RUN npm install
 # If you are building your code for production
 # RUN npm ci --only=production
 
-COPY s. .
+COPY . .
 
 EXPOSE 1883
 
