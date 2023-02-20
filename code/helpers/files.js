@@ -5,8 +5,23 @@ let defaultEncoding = 'utf8'
 
 const readFile = async (fileName) => {
 	try {
-		const data = await fs.readFile(fileName, { encoding: defaultEncoding })
-		return data
+		const raw = await fs.readFile(fileName, { encoding: defaultEncoding })
+		return raw
+	} catch (err) {
+		log.error(err)
+		return null
+	}
+}
+
+const readAllFiles = async (directory) => {
+	try {
+		let invList = new Array()
+		await fs.readdir(directory, async (err, files) => {
+			for (const file of files) {
+				const raw = await readFile(file)
+				invList.push(raw)
+			}
+		})
 	} catch (err) {
 		log.error(err)
 		return null
@@ -47,6 +62,21 @@ const writeJsonFile = async (filename, object) => {
 		return await writeFile(filename, jsonString);
 	} catch (err) {
 		log.error(err)
+	}
+}
+
+const readAllJsonFiles = async (directory) => {
+	try {
+		let invList = new Array()
+		await fs.readdir(directory, async (err, files) => {
+			for (const file of files) {
+				const data = await readJsonFile(file)
+				invList.push(data)
+			}
+		})
+	} catch (err) {
+		log.error(err)
+		return null
 	}
 }
 

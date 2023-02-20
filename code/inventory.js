@@ -8,13 +8,17 @@ const InventoryType = {
 	Bulk: 1
 }
 
-const appConfigPath = g.dataFolder + 'config/'
-const dataFilePath = g.dataFolder
 const appConfigFilename = 'appconfig.json'
 const itemFileNameSuffix = '.json'
 
+let appConfigPath
+let dataFilePath
+
+
 const readAppConfig = async () => {
 	try {
+		appConfigPath = g.dataFolder + 'config/'
+		dataFilePath = g.dataFolder
 		fs.mkdirSync(appConfigPath, { recursive: true }, (err) => {
 			if (err) console.log(err)
 		})

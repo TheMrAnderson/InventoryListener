@@ -31,6 +31,8 @@ async function sendData(objString) {
 			}
 		})
 	} catch (err) {
+		console.log('Error sending to MQTT server')
+		console.log(objString)
 		console.log(err)
 	}
 }

@@ -1,5 +1,6 @@
 FROM node
 
+RUN mkdir -p -v /data
 WORKDIR /usr/src/app
 COPY ./package*.json /usr/src/app
 RUN npm install

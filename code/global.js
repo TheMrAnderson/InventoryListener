@@ -3,4 +3,6 @@ global.mqttClient
 global.dataFolder
 global.logTopic
 global.inventoryConsumeTopic
+global.inventoryUpdated
+global.addUpdateItem
 global.mqttServerAddress

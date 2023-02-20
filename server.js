@@ -10,23 +10,22 @@ require('dotenv').config()
 p.stdin.resume()
 
 // Read environment variables
-global.dataFolder = process.env.DATAFOLDER || '/data/'
-global.logTopic = process.env.LOGTOPIC || 'logs'
-global.inventoryConsumeTopic = process.env.INVENTORYCONSUMETOPIC || 'inventory/consume'
-global.mqttServerAddress = process.env.MQTTSERVERADDRESS
+g.dataFolder = process.env.DATAFOLDER || '/data/'
+g.logTopic = process.env.LOGTOPIC || 'logs'
+g.inventoryConsumeTopic = process.env.INVENTORYCONSUMETOPIC || 'inventory/consume'
+g.mqttServerAddress = process.env.MQTTSERVERADDRESS
 
 // https://github.com/mqttjs/MQTT.js
-g.mqttClient = mqtt.connect(global.mqttServerAddress)
+g.mqttClient = mqtt.connect(g.mqttServerAddress)
 inventory.readAppConfig();
 
-log.verbose('App Started')
-
 g.mqttClient.on('connect', function () {
-	g.mqttClient.subscribe(global.inventoryConsumeTopic, function (err) {
+	g.mqttClient.subscribe(g.inventoryConsumeTopic, function (err) {
 		if (err) {
 			log.error(err, 'Error connecting to inventory consume topic')
 		}
 	})
+	log.verbose('App Started')
 })
 
 g.mqttClient.on('message', function (topic, message) {
