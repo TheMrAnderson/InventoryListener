@@ -5,36 +5,62 @@ const g = require('./code/global')
 const inventory = require('./code/inventory')
 require('dotenv').config()
 
-
 // Begin reading from stdin so the process does not exit
 p.stdin.resume()
 
 // Read environment variables
-g.dataFolder = process.env.DATAFOLDER || '/data/'
-g.logTopic = process.env.LOGTOPIC || 'logs'
-g.inventoryConsumeTopic = process.env.INVENTORYCONSUMETOPIC || 'inventory/consume'
-g.mqttServerAddress = process.env.MQTTSERVERADDRESS
+g.Globals.dataFolder = process.env.DATAFOLDER || '/data/'
+g.Globals.logTopic = process.env.LOGTOPIC || 'logs'
+g.Globals.invConsumeTopic = process.env.INVENTORYCONSUMETOPIC || 'inventory/consume'
+g.Globals.addUpdateItemTopic = process.env.INVENTORYADDUPDATETOPIC || 'inventory/addupdate'
+g.Globals.invUpdatedTopic = process.env.INVENTORYUPDATEDTOPIC || 'inventory/updated'
+g.Globals.actionResponseTopic = process.env.ACTIONRESPONSETOPIC || 'inventory/actionresponse'
+g.Globals.mqttServerAddress = process.env.MQTTSERVERADDRESS
+g.validateConfig()
 
 // https://github.com/mqttjs/MQTT.js
-g.mqttClient = mqtt.connect(g.mqttServerAddress)
+g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress, { clientId: 'invlistener_' + process.env.USERNAME })
 inventory.readAppConfig();
 
-g.mqttClient.on('connect', function () {
-	g.mqttClient.subscribe(g.inventoryConsumeTopic, function (err) {
+g.Globals.mqttClient.on('connect', function () {
+	const opt = { qos: 2, retain: true }
+	g.Globals.mqttClient.subscribe(g.Globals.invConsumeTopic, opt, function (err) {
 		if (err) {
-			log.error(err, 'Error connecting to inventory consume topic')
+			log.error(err, 'Error subscribing to inventory consume topic')
 		}
 	})
-	log.verbose('App Started')
+
+	g.Globals.mqttClient.subscribe(g.Globals.addUpdateItemTopic, opt, function (err) {
+		if (err) {
+			log.error(err, 'Error subscribing to add update topic')
+		}
+	})
+
+	log.verbose('App online and listening for events')
+	console.log('App online and listening for events')
 })
 
-g.mqttClient.on('message', function (topic, message) {
-	inventory.consumeItem(message.toString())
+g.Globals.mqttClient.on('message', function (topic, message) {
+	if (topic === g.Globals.invConsumeTopic) {
+		inventory.consumeItem(message.toString())
+	}
+
+	if (topic === g.Globals.addUpdateItemTopic) {
+
+	}
 })
 
+const cleanup = () => {
+	log.verbose('App Ended')
+	console.log('App Ended')
+	g.Globals.mqttClient.end()
+}
 
 // Close the client when the app is closing
 p.on('SIGTERM', () => {
-	log.verbose('App Ended')
-	g.mqttClient.end()
+	cleanup()
+})
+
+p.on('SIGINT', () => {
+	cleanup()
 })

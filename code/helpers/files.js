@@ -65,15 +65,24 @@ const writeJsonFile = async (filename, object) => {
 	}
 }
 
-const readAllJsonFiles = async (directory) => {
+const readAllJsonFiles = (directory, fileFilter, callback) => {
 	try {
 		let invList = new Array()
-		await fs.readdir(directory, async (err, files) => {
-			for (const file of files) {
-				const data = await readJsonFile(file)
-				invList.push(data)
-			}
-		})
+		const dir = directory
+		fs.readdir(directory)
+			.then(async files => {
+				for (const file of files) {
+					if (file.includes(fileFilter)) {
+						const data = await readJsonFile(dir + file)
+						invList.push(data)
+					}
+				}
+				return callback(invList)
+			})
+			.catch(err => {
+				log.error(err)
+				return null
+			})
 	} catch (err) {
 		log.error(err)
 		return null
@@ -82,5 +91,6 @@ const readAllJsonFiles = async (directory) => {
 
 module.exports = {
 	readJsonFile,
-	writeJsonFile
+	writeJsonFile,
+	readAllJsonFiles
 }

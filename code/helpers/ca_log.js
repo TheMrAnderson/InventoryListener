@@ -1,5 +1,5 @@
 const g = require('../global')
-const mqtt = require('mqtt')
+const m = require('./mqtt')
 
 const error = async (err, message) => {
 	try {
@@ -24,17 +24,7 @@ function createLogObject(message, err) {
 }
 
 async function sendData(objString) {
-	try {
-		g.mqttClient.publish(g.logTopic, objString, function (err) {
-			if (err) {
-				console.log(err)
-			}
-		})
-	} catch (err) {
-		console.log('Error sending to MQTT server')
-		console.log(objString)
-		console.log(err)
-	}
+	m.publish(objString, g.Globals.logTopic)
 }
 
 module.exports = {
