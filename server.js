@@ -19,7 +19,11 @@ g.Globals.mqttServerAddress = process.env.MQTTSERVERADDRESS
 g.validateConfig()
 
 // https://github.com/mqttjs/MQTT.js
-g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress, { clientId: 'invlistener_' + process.env.USERNAME })
+g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
+	{
+		clientId: 'invlistener_' + process.env.USERNAME,
+		clean: false
+	})
 inventory.readAppConfig();
 
 g.Globals.mqttClient.on('connect', function () {
@@ -46,7 +50,7 @@ g.Globals.mqttClient.on('message', function (topic, message) {
 	}
 
 	if (topic === g.Globals.addUpdateItemTopic) {
-
+		inventory.addUpdateItem(message.toString())
 	}
 })
 
