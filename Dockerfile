@@ -1,8 +1,8 @@
 FROM node:19.6.1-bullseye-slim
 
-RUN mkdir -o node -g node -p -v /data
+RUN mkdir -p -v /data && chown node /data/
 WORKDIR /usr/src/app
-COPY ./package*.json /usr/src/app
+COPY ./package*.json /usr/src/app/
 RUN npm install
 # If you are building your code for production
 # RUN npm ci --only=production
