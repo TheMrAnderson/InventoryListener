@@ -127,7 +127,7 @@ const consumeItem = async (number) => {
 	} catch (err) {
 		log.error(err)
 	} finally {
-		pushInventoryUpdatedEvent()
+		pushInvUpdatedEvent()
 	}
 }
 
@@ -181,21 +181,30 @@ async function addToShoppingList(data) {
 			let exists = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber))
 			if (!exists)
 				shList.push(data)
-			else
-				return
+			else {
+				const index = shList.findIndex(l => l.ItemNumber === data.ItemNumber)
+				let existing = shList[index]
+				existing.CurrentQty = data.CurrentQty
+				shList[index] = existing
+			}
 		} else {
 			shList = new Array()
 			shList.push(data)
 		}
-		await files.writeJsonFile(fullName, shList)
+		updateShoppingList(fullName, shList)
 	} catch (err) {
 		log.error(err)
 	}
 }
 
-function pushInventoryUpdatedEvent() {
+async function updateShoppingList(fullName, listData) {
+	await files.writeJsonFile(fullName, listData)
+	await m.publishShoppingList(listData)
+}
+
+function pushInvUpdatedEvent() {
 	try {
-		console.log('pushInventoryUpdatedEvent')
+		console.log('pushInvUpdatedEvent')
 		files.readAllJsonFiles(dataFilePath, itemFileNameSuffix, pushInvUpdatedEventCallback)
 	} catch (err) {
 		log.error(err)
@@ -203,19 +212,15 @@ function pushInventoryUpdatedEvent() {
 }
 
 function pushInvUpdatedEventCallback(data) {
+	console.log('pushIngUpdatedEventCallback')
 	if (data === undefined || data === null) {
 		log.error(null, 'Unable to pull existing inventory')
 		m.publish('Unable to pull existing inventory to update ' + g.Globals.actionResponseTopic, g.Globals.actionResponseTopic, 1, true)
 		return
 	}
-	dString = JSON.stringify(data)
-	m.publish(dString, g.Globals.invUpdatedTopic, 2, true)
+	m.publishInvUpdated(data)
 	const last = data[data.length - 1]
 	g.Globals.appConfig.NextItemNumber = last.ItemNumber + 1
-}
-
-function updateShoppingList(data) {
-
 }
 
 module.exports = {

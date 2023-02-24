@@ -1,4 +1,5 @@
 const g = require('../global')
+const require('mqtt')
 
 const publish = async (data, topic, qos = 0, retain = false) => {
 	try {
@@ -15,6 +16,18 @@ const publish = async (data, topic, qos = 0, retain = false) => {
 	}
 }
 
+const publishInvUpdated = async (data) => {
+	dString = JSON.stringify(data)
+	await publish(dString, g.Globals.invUpdatedTopic, 1, true)
+}
+
+const publishShoppingList = async (data) => {
+	dString = JSON.stringify(data)
+	await publish(dString, g.Globals.shoppingListTopic, 1, true)
+}
+
 module.exports = {
-	publish
+	publish,
+	publishInvUpdated,
+	publishShoppingList
 }

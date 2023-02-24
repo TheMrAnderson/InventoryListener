@@ -1,16 +1,13 @@
 # Inventory Listener
 
-Listen on an MQTT topic for inventory item numbers. Based upon the item configuration either put them directly on the shopping list or only put them on when the threshold is reached
+Listen on MQTT topics for inventory updates. Send an item to be added then consume it.  No databases or complex configuration needed, just simple JSON files.  This handles the heavy lifting and different front ends can be deployed anywhere on the network.
 
-This is the backend part of the Inventory system for ClubAnderson and handles the
+This is the backend part of the Inventory system for ClubAnderson.
 
 ## Variables
 
 `LOGTOPIC`: MQTT topic to send the event logs from the app<br/>
-`INVENTORYCONSUMETOPIC`: MQTT topic to receive an inventory consume events<br/>
-`INVENTORYADDUPDATETOPIC`: MQTT topic to receive an inventory item object to either update if it exists, or add new if it doesn't exit<br/>
-`INVENTORYUPDATEDTOPIC`: MQTT topic to send the inventory list. This will be sent with a `retain` flag of true so the most up to date list of the inventory will be waiting on clients. All inventory actions will respond with a full inventory list back to this topic. Any clients should listen to this topic for the lifetime of the app.<br/>
-`ACTIONRESPONSETOPIC`: MQTT topic to respond the results of an action. For example if the add/update has issues, a reponse will be sent to this topic for clients to handle.<br/>
+`TOPICFOLDER`: MQTT folder for all events to be created within
 `MQTTSERVERADDRESS`: MQTT broker address eg. mqtt://192.168.0.1<br/>
 
 ## Ports
@@ -20,3 +17,29 @@ This is the backend part of the Inventory system for ClubAnderson and handles th
 ## Directories
 
 `/data`: Folder where the data is stored, including the app config as well as the inventory folders<br/>
+
+## How to Use
+
+Create an inventory object based on the object below and send it to the `INVENTORYADDUPDATETOPIC` topic.  `InventoryType` is an enum with the following options:
+
+- Piece: 0,
+- Bulk: 1
+
+New Inventory Object:
+
+```json
+{
+  "CurrentQty": 3,
+  "Config": {
+    "SourceURL": null,
+    "InventoryType": 0,
+    "MinAmount": 1,
+    "Description": "M8 x 0.8 Cap Head Screw",
+    "Location": "Hardware"
+  }
+}
+```
+
+The inventory is stored in individual files to keep the consuming working fast.  At the end of any inventory update, a list will be returned to the `INVENTORYUPDATEDTOPIC` with the retain flag so this is always available to front ends immediately upon activation.
+
+If a change is needed, such as cycle counts, description, anything just send to the `INVENTORYADDUPDATETOPIC`.  If it's an existing item then it will be edited, otherwise it will be created.

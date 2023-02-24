@@ -9,6 +9,7 @@ var Globals = {
 	invUpdatedTopic: undefined,
 	addUpdateItemTopic: undefined,
 	actionResponseTopic: undefined,
+	shoppingListTopic: undefined,
 	mqttServerAddress: undefined
 }
 
@@ -28,6 +29,8 @@ const validateConfig = () => {
 		msg += 'Action response topic not specified. '
 	if (Globals.mqttServerAddress === undefined)
 		msg += 'MQTT server address not specified. '
+	if (Globals.shoppingListTopic === undefined)
+		msg += 'Shopping list topic not specified. '
 
 	if (msg === '')
 		return

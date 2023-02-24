@@ -10,12 +10,12 @@
       "name": "Debug",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/server.js",
-      "args": [
-        "DATAFOLDER=.inventory/",
-        "LOGTOPIC=logs",
-        "INVENTORYCONSUMETOPIC=inventory/consume",
-        "MQTTSERVERADDRESS=mqtt://172.30.62.2"
-      ]
+      "env": {
+        "DATAFOLDER": ".inventory/",
+        "LOGTOPIC": "logs",
+        "TOPICFOLDER": "inventory_dev",
+        "MQTTSERVERADDRESS": "mqtt://172.30.62.2"
+      }
     }
   ]
 }
