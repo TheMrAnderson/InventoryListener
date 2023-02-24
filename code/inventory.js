@@ -4,6 +4,7 @@ const log = require('./helpers/ca_log')
 const m = require('./helpers/mqtt')
 const fs = require('fs')
 
+//#region Types and const
 const InventoryType = {
 	Piece: 0,
 	Bulk: 1
@@ -16,7 +17,7 @@ const defaultItem = {
 	{
 		"SourceURL": "",
 		"InventoryType": 0,
-		"MinAmount": 0,
+		"MinQty": 0,
 		"Description": "",
 		"Location": ""
 	}
@@ -32,7 +33,9 @@ const itemFileNameSuffix = '_item.json'
 
 let appConfigPath
 let dataFilePath
+//#endregion
 
+//#region Config
 const setupApp = async () => {
 	try {
 		console.log('setupApp')
@@ -75,11 +78,35 @@ const writeAppConfig = async () => {
 		log.error(err)
 	}
 }
+//#endregion
 
+//#region Helper Methods
 function getFileName(number) {
 	return dataFilePath + number + itemFileNameSuffix
 }
 
+function updateInvItem(oldItem, newItem) {
+	oldItem.CurrentQty = newItem.CurrentQty
+	oldItem.Config.SourceURL = newItem.Config.SourceURL
+	oldItem.Config.InventoryType = newItem.Config.InventoryType
+	oldItem.Config.MinQty = newItem.Config.MinQty
+	oldItem.Config.Description = newItem.Config.Description
+	oldItem.Config.Location = newItem.Config.Location
+	return oldItem
+}
+
+function loadDefaultItem(number) {
+	try {
+		let data = defaultItem
+		data.ItemNumber = number
+		return data
+	} catch (err) {
+		log.error(err)
+	}
+}
+//#endregion
+
+//#region Read/Write Items
 async function readInvItem(number) {
 	try {
 		console.log(`readInvItem ${number}`)
@@ -104,10 +131,11 @@ async function writeInvItem(data) {
 		log.err(err, `Error writing item ${number}`)
 	}
 }
+//#endregion
 
+//#region Consume Event
 const consumeItem = async (number) => {
 	try {
-		console.log('consumeItem ' + number)
 		log.verbose('Consuming ' + number)
 		const data = await readInvItem(number)
 		if (data == null) {
@@ -117,9 +145,7 @@ const consumeItem = async (number) => {
 		if (data.Config.InventoryType == InventoryType.Piece) {
 			data.CurrentQty--
 			await writeInvItem(data)
-			if (data.CurrentQty <= data.Config.MinAmount)
-				addToShoppingList(data)
-			return
+			await addRemoveShoppingList(data)
 		}
 		if (data.Config.InventoryType == InventoryType.Bulk) {
 			addToShoppingList(data)
@@ -130,17 +156,9 @@ const consumeItem = async (number) => {
 		pushInvUpdatedEvent()
 	}
 }
+//#endregion
 
-function updateInvItem(oldItem, newItem) {
-	oldItem.CurrentQty = newItem.CurrentQty
-	oldItem.Config.SourceURL = newItem.Config.SourceURL
-	oldItem.Config.InventoryType = newItem.Config.InventoryType
-	oldItem.Config.MinAmount = newItem.Config.MinAmount
-	oldItem.Config.Description = newItem.Config.Description
-	oldItem.Config.Location = newItem.Config.Location
-	return oldItem
-}
-
+//#region Add/Update Event
 const addUpdateItem = async (data) => {
 	try {
 		let updatedItem
@@ -154,31 +172,43 @@ const addUpdateItem = async (data) => {
 			updatedItem = updateInvItem(existing, data)
 		}
 		await writeInvItem(updatedItem)
+		await addRemoveShoppingList(updateInvItem)
 		return
 	} catch (err) {
 		log.error(err, `Error adding/updating item`)
+	} finally {
+		pushInvUpdatedEvent()
 	}
 }
+//#endregion
 
-async function loadDefaultItem(number) {
-	try {
-		console.log('loadDefaultItem ' + number)
-		let fullName = dataFilePath + number + itemFileNameSuffix
-		let data = defaultItem
-		data.ItemNumber = number
-		return data
-	} catch (err) {
-		log.error(err)
+//#region Shopping List
+async function getShoppingList() {
+	const fullName = `${dataFilePath}shoppingList.json`
+	return await files.readJsonFile(fullName)
+}
+
+async function updateShoppingList(listData) {
+	const fullName = `${dataFilePath}shoppingList.json`
+	await files.writeJsonFile(fullName, listData)
+	await m.publishShoppingList(listData)
+}
+
+async function addRemoveShoppingList(data) {
+	if (data.Config.InventoryType === InventoryType.Piece) {
+		if (data.CurrentQty <= data.Config.MinQty)
+			await addToShoppingList(data)
+		else
+			await removeIfOnShoppingList(data)
 	}
 }
 
 async function addToShoppingList(data) {
 	try {
 		console.log('addToShoppingList')
-		let fullName = dataFilePath + 'shoppingList.json'
-		let shList = await files.readJsonFile(fullName)
+		let shList = await getShoppingList()
 		if (shList != null) {
-			let exists = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber))
+			const exists = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber))
 			if (!exists)
 				shList.push(data)
 			else {
@@ -191,17 +221,25 @@ async function addToShoppingList(data) {
 			shList = new Array()
 			shList.push(data)
 		}
-		updateShoppingList(fullName, shList)
+		updateShoppingList(shList)
 	} catch (err) {
 		log.error(err)
 	}
 }
 
-async function updateShoppingList(fullName, listData) {
-	await files.writeJsonFile(fullName, listData)
-	await m.publishShoppingList(listData)
+async function removeIfOnShoppingList(data) {
+	let shList = await getShoppingList()
+	if (shList == null)
+		return
+	const exists = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber))
+	if (!exists)
+		return
+	shList = shList.filter(item => item.ItemNumber !== data.ItemNumber)
+	updateShoppingList(shList)
 }
+//#endregion
 
+//#region Inventory Updated Event
 function pushInvUpdatedEvent() {
 	try {
 		console.log('pushInvUpdatedEvent')
@@ -222,6 +260,7 @@ function pushInvUpdatedEventCallback(data) {
 	const last = data[data.length - 1]
 	g.Globals.appConfig.NextItemNumber = last.ItemNumber + 1
 }
+//#endregion
 
 module.exports = {
 	setupApp,

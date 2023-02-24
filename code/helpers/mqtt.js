@@ -1,5 +1,4 @@
 const g = require('../global')
-const require('mqtt')
 
 const publish = async (data, topic, qos = 0, retain = false) => {
 	try {
