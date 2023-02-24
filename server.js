@@ -11,10 +11,12 @@ p.stdin.resume()
 // Read environment variables
 g.Globals.dataFolder = process.env.DATAFOLDER || '/data/'
 g.Globals.logTopic = process.env.LOGTOPIC || 'logs'
-g.Globals.invConsumeTopic = process.env.INVENTORYCONSUMETOPIC || 'inventory/consume'
-g.Globals.addUpdateItemTopic = process.env.INVENTORYADDUPDATETOPIC || 'inventory/addupdate'
-g.Globals.invUpdatedTopic = process.env.INVENTORYUPDATEDTOPIC || 'inventory/updated'
-g.Globals.actionResponseTopic = process.env.ACTIONRESPONSETOPIC || 'inventory/actionresponse'
+const topicFolder = process.env.TOPICFOLDER || 'inventory_ca'
+g.Globals.invConsumeTopic = process.env.INVENTORYCONSUMETOPIC || `${topicFolder}/consume`
+g.Globals.addUpdateItemTopic = process.env.INVENTORYADDUPDATETOPIC || `${topicFolder}/addupdate`
+g.Globals.invUpdatedTopic = process.env.INVENTORYUPDATEDTOPIC || `${topicFolder}/updated`
+g.Globals.actionResponseTopic = process.env.ACTIONRESPONSETOPIC || `${topicFolder}/actionresponse`
+g.Globals.shoppingListTopic = process.env.SHOPPINGLISTTOPIC || `${topicFolder}/shoppinglist`
 g.Globals.mqttServerAddress = process.env.MQTTSERVERADDRESS
 g.validateConfig()
 inventory.setupApp();
