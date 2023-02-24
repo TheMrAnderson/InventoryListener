@@ -12,7 +12,7 @@ var Globals = {
 	mqttServerAddress: undefined
 }
 
-const validateConfig = async () => {
+const validateConfig = () => {
 	let msg = ''
 	if (Globals.dataFolder === undefined)
 		msg += 'Data folder not specified. '
@@ -31,12 +31,17 @@ const validateConfig = async () => {
 
 	if (msg === '')
 		return
-	console.log(msg + 'Exiting application')
+	exitAppEarly(msg)
+}
+
+const exitAppEarly = (reason) => {
+	console.log(`Exiting application. ${reason}`)
 	p.exitCode = 9
 	p.kill(p.pid, "SIGTERM")
 }
 
 module.exports = {
 	validateConfig,
+	exitAppEarly,
 	Globals
 }

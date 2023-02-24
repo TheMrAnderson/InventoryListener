@@ -9,28 +9,48 @@ const InventoryType = {
 	Bulk: 1
 }
 
+const defaultItem = {
+	"ItemNumber": undefined,
+	"CurrentQty": 0,
+	"Config":
+	{
+		"SourceURL": "",
+		"InventoryType": 0,
+		"MinAmount": 0,
+		"Description": "",
+		"Location": ""
+	}
+}
+
+const defaultConfig = {
+	StartingItemNumber: 1000,
+	NextItemNumber: 1000
+}
+
 const appConfigFilename = 'appconfig.json'
 const itemFileNameSuffix = '_item.json'
 
 let appConfigPath
 let dataFilePath
 
-
-const readAppConfig = async () => {
+const setupApp = async () => {
 	try {
-		console.log('readAppConfig')
+		console.log('setupApp')
 		appConfigPath = g.Globals.dataFolder + 'config/'
 		dataFilePath = g.Globals.dataFolder
 		fs.mkdirSync(appConfigPath, { recursive: true }, (err) => {
 			if (err) console.log(err)
+			g.exitAppEarly('Unable to make AppConfig directory')
 		})
 		fs.mkdirSync(dataFilePath, { recursive: true }, (err) => {
 			if (err) console.log(err)
+			g.exitAppEarly('Unable to make Data directory')
 		})
 		g.Globals.appConfig = await files.readJsonFile(appConfigPath + appConfigFilename)
 		if (g.Globals.appConfig == null) {
 			g.Globals.appConfig = loadInitialConfig()
 		}
+		m.connect()
 	} catch (err) {
 		log.error(err)
 	}
@@ -39,8 +59,8 @@ const readAppConfig = async () => {
 async function loadInitialConfig() {
 	try {
 		console.log('loadInitialConfig')
-		const config = { StartingItemNumber: 1000 }
-		await files.writeJsonFile(appConfigPath + appConfigFilename, config)
+		g.Globals.appConfig = defaultConfig
+		await writeAppConfig()
 		return config
 	} catch (err) {
 		log.error(err)
@@ -56,18 +76,47 @@ const writeAppConfig = async () => {
 	}
 }
 
+function getFileName(number) {
+	return dataFilePath + number + itemFileNameSuffix
+}
+
+async function readInvItem(number) {
+	try {
+		console.log(`readInvItem ${number}`)
+		const fullName = getFileName(number)
+		const data = await files.readJsonFile(fullName)
+		if (data == null) {
+			console.log(`Asked to read item that doesn't exist: ${number}`)
+			return null
+		}
+		return data
+	} catch (err) {
+		log.error(err, `Error reading item ${number}`)
+	}
+}
+
+async function writeInvItem(data) {
+	try {
+		console.log(`writeInvItem ${data.ItemNumber}`)
+		const fullName = getFileName(data.ItemNumber)
+		await files.writeJsonFile(fullName, data)
+	} catch (err) {
+		log.err(err, `Error writing item ${number}`)
+	}
+}
+
 const consumeItem = async (number) => {
 	try {
 		console.log('consumeItem ' + number)
 		log.verbose('Consuming ' + number)
-		let fullName = dataFilePath + number + itemFileNameSuffix
-		let data = await files.readJsonFile(fullName)
+		const data = await readInvItem(number)
 		if (data == null) {
+			console.log(`Invalid inventory item consumed: ${number}`)
 			return
 		}
 		if (data.Config.InventoryType == InventoryType.Piece) {
 			data.CurrentQty--
-			await files.writeJsonFile(fullName, data)
+			await writeInvItem(data)
 			if (data.CurrentQty <= data.Config.MinAmount)
 				addToShoppingList(data)
 			return
@@ -82,16 +131,42 @@ const consumeItem = async (number) => {
 	}
 }
 
-const addUpdateItem = (data) => {
+function updateInvItem(oldItem, newItem) {
+	oldItem.CurrentQty = newItem.CurrentQty
+	oldItem.Config.SourceURL = newItem.Config.SourceURL
+	oldItem.Config.InventoryType = newItem.Config.InventoryType
+	oldItem.Config.MinAmount = newItem.Config.MinAmount
+	oldItem.Config.Description = newItem.Config.Description
+	oldItem.Config.Location = newItem.Config.Location
+	return oldItem
+}
 
+const addUpdateItem = async (data) => {
+	try {
+		let updatedItem
+		if (data.ItemNumber == null || data.ItemNumber == undefined) {
+			data.ItemNumber = g.Globals.appConfig.NextItemNumber
+			data = loadDefaultItem(data.ItemNumber)
+			updatedItem = updateInvItem(defaultItem, data)
+
+		} else {
+			existing = await readInvItem(data.ItemNumber)
+			updatedItem = updateInvItem(existing, data)
+		}
+		await writeInvItem(updatedItem)
+		return
+	} catch (err) {
+		log.error(err, `Error adding/updating item`)
+	}
 }
 
 async function loadDefaultItem(number) {
 	try {
 		console.log('loadDefaultItem ' + number)
 		let fullName = dataFilePath + number + itemFileNameSuffix
-		const data = { "ItemNumber": number, "CurrentQty": 0, "Config": { "SourceURL": "", "InventoryType": 0, "MinAmount": 0, "Description": "", "Location": "" } }
-		await files.writeJsonFile(fullName, data)
+		let data = defaultItem
+		data.ItemNumber = number
+		return data
 	} catch (err) {
 		log.error(err)
 	}
@@ -135,10 +210,16 @@ function pushInvUpdatedEventCallback(data) {
 	}
 	dString = JSON.stringify(data)
 	m.publish(dString, g.Globals.invUpdatedTopic, 2, true)
+	const last = data[data.length - 1]
+	g.Globals.appConfig.NextItemNumber = last.ItemNumber + 1
+}
+
+function updateShoppingList(data) {
+
 }
 
 module.exports = {
-	readAppConfig,
+	setupApp,
 	writeAppConfig,
 	consumeItem,
 	addUpdateItem
