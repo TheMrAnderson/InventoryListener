@@ -53,7 +53,7 @@ const setupApp = async () => {
 		if (g.Globals.appConfig == null) {
 			g.Globals.appConfig = loadInitialConfig()
 		}
-		m.connect()
+		files.readAllJsonFiles(dataFilePath, itemFileNameSuffix, pushInvUpdatedEventCallback)
 	} catch (err) {
 		log.error(err)
 	}
@@ -93,16 +93,6 @@ function updateInvItem(oldItem, newItem) {
 	oldItem.Config.Description = newItem.Config.Description
 	oldItem.Config.Location = newItem.Config.Location
 	return oldItem
-}
-
-function loadDefaultItem(number) {
-	try {
-		let data = defaultItem
-		data.ItemNumber = number
-		return data
-	} catch (err) {
-		log.error(err)
-	}
 }
 //#endregion
 
@@ -163,16 +153,25 @@ const addUpdateItem = async (data) => {
 	try {
 		let updatedItem
 		if (data.ItemNumber == null || data.ItemNumber == undefined) {
-			data.ItemNumber = g.Globals.appConfig.NextItemNumber
-			data = loadDefaultItem(data.ItemNumber)
+			// No item number in payload or null
 			updatedItem = updateInvItem(defaultItem, data)
+			updatedItem.ItemNumber = g.Globals.appConfig.NextItemNumber
 
 		} else {
+			// Item number was included in payload
 			existing = await readInvItem(data.ItemNumber)
-			updatedItem = updateInvItem(existing, data)
+			if (existing != null) {
+				// Existing item found
+				updatedItem = updateInvItem(existing, data)
+			}
+			else if (existing == null && data.ItemNumber === g.Globals.appConfig.NextItemNumber) {
+				// Existing not found BUT it's the next item number anyway
+				updatedItem = updateInvItem(defaultItem, data)
+				updatedItem.ItemNumber = data.ItemNumber
+			}
 		}
 		await writeInvItem(updatedItem)
-		await addRemoveShoppingList(updateInvItem)
+		await addRemoveShoppingList(updatedItem)
 		return
 	} catch (err) {
 		log.error(err, `Error adding/updating item`)
@@ -259,6 +258,7 @@ function pushInvUpdatedEventCallback(data) {
 	m.publishInvUpdated(data)
 	const last = data[data.length - 1]
 	g.Globals.appConfig.NextItemNumber = last.ItemNumber + 1
+	writeAppConfig()
 }
 //#endregion
 

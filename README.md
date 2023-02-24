@@ -33,7 +33,7 @@ New Inventory Object:
   "Config": {
     "SourceURL": null,
     "InventoryType": 0,
-    "MinAmount": 1,
+    "MinQty": 1,
     "Description": "M8 x 0.8 Cap Head Screw",
     "Location": "Hardware"
   }
