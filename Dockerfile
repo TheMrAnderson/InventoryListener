@@ -1,6 +1,6 @@
 FROM node:19.6.1-bullseye-slim
 
-RUN mkdir -p -v /data
+RUN mkdir -o node -g node -p -v /data
 WORKDIR /usr/src/app
 COPY ./package*.json /usr/src/app
 RUN npm install
