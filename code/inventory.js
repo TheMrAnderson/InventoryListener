@@ -51,11 +51,13 @@ const setupApp = async () => {
 		})
 		g.Globals.appConfig = await files.readJsonFile(appConfigPath + appConfigFilename)
 		if (g.Globals.appConfig == null) {
-			g.Globals.appConfig = loadInitialConfig()
+			await loadInitialConfig()
+			console.log(JSON.stringify(g.Globals.appConfig))
 		}
+		console.log(JSON.stringify(g.Globals.invConsumeTopic))
 		files.readAllJsonFiles(dataFilePath, itemFileNameSuffix, pushInvUpdatedEventCallback)
 	} catch (err) {
-		log.error(err)
+		console.log(err)
 	}
 }
 
@@ -64,7 +66,6 @@ async function loadInitialConfig() {
 		console.log('loadInitialConfig')
 		g.Globals.appConfig = defaultConfig
 		await writeAppConfig()
-		return config
 	} catch (err) {
 		log.error(err)
 	}
