@@ -30,14 +30,15 @@ New Inventory Object:
 ```json
 {
   "CurrentQty": 3,
-  "Config": {
-    "SourceURL": null,
-    "InventoryType": 0,
-    "MinQty": 1,
-    "Description": "M8 x 0.8 Cap Head Screw",
-    "Location": "Hardware"
-  }
+  "Description": "M8 x 0.8 Cap Head Screw",
+  "SourceURL": "",
+  "InventoryType": 0,
+  "Manufacturer": "",
+  "PartNumber": "",
+  "MinQty": 1,
+  "Location": "Hardware"
 }
+
 ```
 
 The inventory is stored in individual files to keep the consuming working fast.  At the end of any inventory update, a list will be returned to the `<TOPICFOLDER>/updated` with the retain flag so this is always available to front ends immediately upon activation.
