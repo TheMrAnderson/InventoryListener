@@ -13,14 +13,13 @@ const InventoryType = {
 const defaultItem = {
 	"ItemNumber": undefined,
 	"CurrentQty": 0,
-	"Config":
-	{
-		"SourceURL": "",
-		"InventoryType": 0,
-		"MinQty": 0,
-		"Description": "",
-		"Location": ""
-	}
+	"Description": "",
+	"SourceURL": "",
+	"InventoryType": 0,
+	"Manufacturer": "",
+	"PartNumber": "",
+	"MinQty": 0,
+	"Location": ""
 }
 
 const defaultConfig = {
@@ -88,11 +87,13 @@ function getFileName(number) {
 
 function updateInvItem(oldItem, newItem) {
 	oldItem.CurrentQty = newItem.CurrentQty
-	oldItem.Config.SourceURL = newItem.Config.SourceURL
-	oldItem.Config.InventoryType = newItem.Config.InventoryType
-	oldItem.Config.MinQty = newItem.Config.MinQty
-	oldItem.Config.Description = newItem.Config.Description
-	oldItem.Config.Location = newItem.Config.Location
+	oldItem.Description = newItem.Description
+	oldItem.SourceURL = newItem.SourceURL
+	oldItem.InventoryType = newItem.InventoryType
+	oldItem.Manufacturer = newItem.Manufacturer
+	oldItem.PartNumber = newItem.PartNumber
+	oldItem.MinQty = newItem.MinQty
+	oldItem.Location = newItem.Location
 	return oldItem
 }
 //#endregion
@@ -133,12 +134,12 @@ const consumeItem = async (number) => {
 			console.log(`Invalid inventory item consumed: ${number}`)
 			return
 		}
-		if (data.Config.InventoryType == InventoryType.Piece) {
+		if (data.InventoryType == InventoryType.Piece) {
 			data.CurrentQty--
 			await writeInvItem(data)
 			await addRemoveShoppingList(data)
 		}
-		if (data.Config.InventoryType == InventoryType.Bulk) {
+		if (data.InventoryType == InventoryType.Bulk) {
 			addToShoppingList(data)
 		}
 	} catch (err) {
@@ -195,8 +196,8 @@ async function updateShoppingList(listData) {
 }
 
 async function addRemoveShoppingList(data) {
-	if (data.Config.InventoryType === InventoryType.Piece) {
-		if (data.CurrentQty <= data.Config.MinQty)
+	if (data.InventoryType === InventoryType.Piece) {
+		if (data.CurrentQty <= data.MinQty)
 			await addToShoppingList(data)
 		else
 			await removeIfOnShoppingList(data)
@@ -250,7 +251,7 @@ function pushInvUpdatedEvent() {
 }
 
 function pushInvUpdatedEventCallback(data) {
-	console.log('pushIngUpdatedEventCallback')
+	console.log('pushInvUpdatedEventCallback')
 	if (data === undefined || data === null) {
 		log.error(null, 'Unable to pull existing inventory')
 		m.publish('Unable to pull existing inventory to update ' + g.Globals.actionResponseTopic, g.Globals.actionResponseTopic, 1, true)
