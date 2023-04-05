@@ -69,26 +69,26 @@ const readAllJsonFiles = (directory, fileFilter, callback) => {
 //#region Write
 const writeFile = async (filename, content) => {
 	try {
-		await fs.writeFile(filename, content, { encoding: defaultEncoding, flag: 'w' })
+		await fs.writeFile(filename, content, { encoding: defaultEncoding, flag: 'w' });
 	} catch (err) {
-		log.error(err)
+		log.error(err);
 	}
 }
 
 const appendToFile = async (filename, content) => {
 	try {
-		await fs.appendFile(filename, content, { encoding: defaultEncoding })
+		await fs.appendFile(filename, content, { encoding: defaultEncoding });
 	} catch (err) {
-		log.error(err)
+		log.error(err);
 	}
 }
 
 const writeJsonFile = async (filename, object) => {
 	try {
-		let jsonString = JSON.stringify(object, null, 2)
+		let jsonString = JSON.stringify(object, null, 2);
 		return await writeFile(filename, jsonString);
 	} catch (err) {
-		log.error(err)
+		log.error(err);
 	}
 }
 //#endregion
@@ -97,4 +97,4 @@ module.exports = {
 	readJsonFile,
 	writeJsonFile,
 	readAllJsonFiles
-}
+};
