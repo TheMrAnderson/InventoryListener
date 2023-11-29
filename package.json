@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.0.3",
-    "mqtt": "^4.3.7"
+    "mqtt": "^4.3.7",
+    "node-schedule": "^2.1.1"
   }
 }

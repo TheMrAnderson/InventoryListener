@@ -10,7 +10,8 @@ var Globals = {
 	addUpdateItemTopic: undefined,
 	actionResponseTopic: undefined,
 	shoppingListTopic: undefined,
-	mqttServerAddress: undefined
+	mqttServerAddress: undefined,
+	invDataList: undefined
 };
 
 const validateConfig = () => {
