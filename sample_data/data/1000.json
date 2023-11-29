@@ -1,11 +1,12 @@
 {
   "ItemNumber": 1000,
   "CurrentQty": 3,
-  "Config": {
-    "SourceURL": null,
-    "InventoryType": 0,
-    "MinAmount": 1,
-    "Description": "M8 x 0.8 Cap Head Screw",
-    "Location": "Hardware"
-  }
+  "MinQty": 1,
+  "Description": "M8 x 0.8 Cap Head Screw",
+  "SourceURL": null,
+  "InventoryType": 0,
+  "Manufacturer": "ACME",
+  "PartNumber": "123ABC",
+  "Location": "Metric Tackle Box",
+  "Category": "Hardware"
 }

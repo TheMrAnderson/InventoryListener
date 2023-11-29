@@ -16,7 +16,7 @@ const readFile = async (fileName) => {
 
 const readAllFiles = async (directory) => {
 	try {
-		let invList = new Array()
+		let invList = [];
 		await fs.readdir(directory, async (err, files) => {
 			for (const file of files) {
 				const raw = await readFile(file)
@@ -43,7 +43,7 @@ const readJsonFile = async (filename) => {
 
 const readAllJsonFiles = (directory, fileFilter, callback) => {
 	try {
-		let invList = new Array()
+		let invList = [];
 		const dir = directory
 		fs.readdir(directory)
 			.then(async files => {

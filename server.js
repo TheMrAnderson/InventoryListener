@@ -21,7 +21,6 @@ g.Globals.mqttServerAddress = process.env.MQTTSERVERADDRESS;
 g.validateConfig();
 inventory.setupApp();
 
-// https://github.com/mqttjs/MQTT.js
 g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
 	{
 		clientId: `invlistener_${process.env.USERNAME}_${process.env.PWD}`,
