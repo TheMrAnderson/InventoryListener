@@ -24,19 +24,24 @@ Create an inventory object based on the object below and send it to the `<TOPICF
 
 - Piece: 0,
 - Bulk: 1
+- Quart: 2,
+- Gallon: 3,
+- Ounce: 4
 
 New Inventory Object:
 
 ```json
 {
+  "ItemNumber": 1000,
   "CurrentQty": 3,
-  "Description": "M8 x 0.8 Cap Head Screw",
-  "SourceURL": "",
-  "InventoryType": 0,
-  "Manufacturer": "",
-  "PartNumber": "",
   "MinQty": 1,
-  "Location": "Hardware"
+  "Description": "M8 x 0.8 Cap Head Screw",
+  "SourceURL": null,
+  "InventoryType": 0,
+  "Manufacturer": "ACME",
+  "PartNumber": "123ABC",
+  "Location": "Metric Tackle Box",
+  "Category": "Hardware"
 }
 
 ```
