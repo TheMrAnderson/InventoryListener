@@ -14,6 +14,8 @@ const InventoryType = {
 	Ounce: 4
 };
 
+const NotQtyInventoryTypes = [InventoryType.Bulk];
+
 const defaultItem = {
 	"ItemNumber": undefined,
 	"CurrentQty": 0,
@@ -113,6 +115,7 @@ function getFileName(number) {
  * @returns Updated inventory object
  */
 function updateInvItem(oldItem, newItem) {
+	console.log('updateInvItem');
 	oldItem.CurrentQty = newItem.CurrentQty;
 	oldItem.MinQty = newItem.MinQty;
 	oldItem.Description = newItem.Description.trim();
@@ -121,13 +124,16 @@ function updateInvItem(oldItem, newItem) {
 	oldItem.Manufacturer = newItem.Manufacturer.trim();
 	oldItem.PartNumber = newItem.PartNumber.trim();
 	oldItem.Location = newItem.Location.trim();
+	console.log('About to set category');
 	oldItem.Category = newItem.Category.trim();
+	console.log('Category set');
 
-	if (newItem.InventoryType == 1) {
-		oldItem.CurrentQty = "";
-		oldItem.MinQty = "";
+	if (NotQtyInventoryTypes.includes(newItem.InventoryType)) {
+		oldItem.CurrentQty = null;
+		oldItem.MinQty = null;
 	}
 
+	console.log(oldItem);
 	return oldItem;
 };
 //#endregion
