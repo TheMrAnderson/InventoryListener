@@ -9,7 +9,7 @@ const readFile = async (fileName) => {
 		const raw = await fs.readFile(fileName, { encoding: defaultEncoding })
 		return raw
 	} catch (err) {
-		log.error(err)
+		log.error('Error in readFile', err)
 		return null
 	}
 }
@@ -24,7 +24,7 @@ const readAllFiles = async (directory) => {
 			}
 		})
 	} catch (err) {
-		log.error(err)
+		log.error('Error in readAllFiles', err)
 		return null
 	}
 }
@@ -37,7 +37,7 @@ const readJsonFile = async (filename) => {
 		}
 		return raw
 	} catch (err) {
-		log.error(err)
+		log.error('Error in readJsonFile', err)
 	}
 }
 
@@ -56,11 +56,11 @@ const readAllJsonFiles = (directory, fileFilter, callback) => {
 				return callback(invList)
 			})
 			.catch(err => {
-				log.error(err)
+				log.error('Error in readAllJsonFiles readdir', err)
 				return null
 			})
 	} catch (err) {
-		log.error(err)
+		log.error('Error in readAllJsonFiles', err)
 		return null
 	}
 }
@@ -71,7 +71,7 @@ const writeFile = async (filename, content) => {
 	try {
 		await fs.writeFile(filename, content, { encoding: defaultEncoding, flag: 'w' });
 	} catch (err) {
-		log.error(err);
+		log.error('Error in writeFile', err);
 	}
 }
 
@@ -79,7 +79,7 @@ const appendToFile = async (filename, content) => {
 	try {
 		await fs.appendFile(filename, content, { encoding: defaultEncoding });
 	} catch (err) {
-		log.error(err);
+		log.error('Error in appendToFile', err);
 	}
 }
 
@@ -88,7 +88,7 @@ const writeJsonFile = async (filename, object) => {
 		let jsonString = JSON.stringify(object, null, 2);
 		return await writeFile(filename, jsonString);
 	} catch (err) {
-		log.error(err);
+		log.error('Error in writeJsonFile', err);
 	}
 }
 //#endregion

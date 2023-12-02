@@ -5,13 +5,12 @@ const publish = async (data, topic, qos = 0, retain = false) => {
 		const opt = { qos: qos, retain: retain };
 		g.Globals.mqttClient.publish(topic, data, opt, function (err) {
 			if (err) {
-				console.log(err);
+				console.log('Error in mqttClient.publish', err);
 			}
 		});
 	}
 	catch (err) {
-		console.log('Error publishing MQTT message to topic');
-		console.log(err);
+		console.log('Error publishing MQTT message to topic', err)
 	}
 }
 

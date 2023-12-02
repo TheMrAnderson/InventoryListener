@@ -11,7 +11,7 @@
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/server.js",
       "env": {
-        "DATAFOLDER": ".inventory/",
+        "DATAFOLDER": "/home/rooster/Downloads/inventory/",
         "LOGTOPIC": "logs",
         "TOPICFOLDER": "inventory_dev",
         "MQTTSERVERADDRESS": "mqtt://172.30.62.2"
