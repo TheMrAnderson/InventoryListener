@@ -3,6 +3,8 @@ const log = require('./src/helpers/ca_log');
 const g = require('./src/global');
 const inventory = require('./src/inventory');
 const mqtt = require('mqtt');
+const { onMqttConnect } = require('./src/helpers/mqtt_connect');
+const { onMqttMessage } = require('./src/helpers/mqtt_message');
 require('dotenv').config();
 
 // Begin reading from stdin so the process does not exit
@@ -27,43 +29,13 @@ g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
 		clean: false
 	});
 
-g.Globals.mqttClient.on('connect', function () {
-	const opt = { qos: 2, retain: true };
-	g.Globals.mqttClient.subscribe(g.Globals.invConsumeTopic, opt, function (err) {
-		if (err) {
-			console.log(err, 'Error subscribing to inventory consume topic');
-		}
-	});
+g.Globals.mqttClient.on('connect', () => onMqttConnect());
 
-	g.Globals.mqttClient.subscribe(g.Globals.addUpdateItemTopic, opt, function (err) {
-		if (err) {
-			console.log(err, 'Error subscribing to add update topic');
-		}
-	});
 
-	console.log('App online and listening for events');
-	log.verbose('App online and listening for events');
-});
-
-g.Globals.mqttClient.on('message', function (topic, message, packet) {
-	let obj;
-	if (packet.topic != null) {
-		const stringBuf = packet.payload.toString('utf-8');
-		if (stringBuf.length == 0)
-			return;
-		obj = JSON.parse(stringBuf);
-	}
-
-	if (topic === g.Globals.invConsumeTopic)
-		inventory.consumeItem(obj);
-
-	if (topic === g.Globals.addUpdateItemTopic)
-		inventory.addUpdateItem(obj);
-})
+g.Globals.mqttClient.on('message', (topic, message, packet) => onMqttMessage(topic, message, packet));
 
 const cleanup = () => {
 	log.verbose('App Ended');
-	console.log('App Ended');
 	g.Globals.mqttClient.end();
 }
 

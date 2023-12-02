@@ -1,37 +1,43 @@
 const g = require('../global');
-const m = require('./mqtt');
+const m = require('./mqtt_publish');
 
-const error = async (err, message) => {
+const error = async (message, err) => {
 	try {
-		console.log(createLogObject(message, err));
-		await sendData(createLogObject(message, err));
+		await sendData(createLogObject(message, err, 'Error'));
 	} catch (err) {
-		console.log(err);
+		console.log('Error in ca_log.error', err);
 	}
 }
 
 const verbose = async (message) => {
 	try {
-		await sendData(createLogObject(message, null));
+		await sendData(createLogObject(message, null, 'Verbose'));
 	} catch (err) {
-		console.log(err);
+		console.log('Error in ca_log.verbose', err);
 	}
 }
 
-function createLogObject(message, err) {
+function createLogObject(message, err, logType) {
 	const obj =
 	{
 		Source: 'CA Inventory Listener',
 		EventTime: new Date().toISOString(),
 		Message: message,
-		Error: err
+		Error: err,
+		LogType: logType
 	};
 	let objString = JSON.stringify(obj, null, 2);
 	return objString;
 }
 
 async function sendData(objString) {
-	m.publish(objString, g.Globals.logTopic);
+	logToConsole(objString);
+	if (g.Globals.mqttClient !== undefined)
+		m.publish(objString, g.Globals.logTopic);
+}
+
+function logToConsole(message) {
+	console.log(message);
 }
 
 module.exports = {
