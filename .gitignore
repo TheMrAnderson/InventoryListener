@@ -1,6 +1,7 @@
 # Repo Specific
 .inventory
 .env
+helpfulscripts.md
 
 # Logs
 logs
