@@ -362,11 +362,16 @@ function pushInvUpdatedEventCallback(data) {
 		return;
 	}
 	// missingItemNumbers = findMissing(data);
-
 	m.publishInvUpdated(data);
+	data.map(refreshShoppingList);
 	const last = data[data.length - 1];
 	g.Globals.appConfig.NextItemNumber = last.ItemNumber + 1;
 	writeAppConfig();
+}
+
+function refreshShoppingList(data) {
+	if (data.InventoryType != 1)
+		addRemoveShoppingList(data);
 }
 
 // /**
