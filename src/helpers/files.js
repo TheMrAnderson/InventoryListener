@@ -14,24 +14,9 @@ const readFile = async (fileName) => {
 	}
 }
 
-const readAllFiles = async (directory) => {
+const readJsonFile = async (fullFilePath) => {
 	try {
-		let invList = [];
-		await fs.readdir(directory, async (err, files) => {
-			for (const file of files) {
-				const raw = await readFile(file)
-				invList.push(raw)
-			}
-		})
-	} catch (err) {
-		log.error('Error in readAllFiles', err)
-		return null
-	}
-}
-
-const readJsonFile = async (filename) => {
-	try {
-		let raw = await readFile(filename)
+		let raw = await readFile(fullFilePath)
 		if (raw != null) {
 			return JSON.parse(raw)
 		}
@@ -41,24 +26,20 @@ const readJsonFile = async (filename) => {
 	}
 }
 
-const readAllJsonFiles = (directory, fileFilter, callback) => {
+/**
+ *
+ * @param {string} directory Directory to read all files from
+ * @param {*} fileHandlingMethod Method to work with each file, parameters returned are (file, file's data in JSON)
+ * @returns
+ */
+const readAllJsonFiles = async (directory, fileHandlingMethod) => {
 	try {
-		let invList = [];
-		const dir = directory
-		fs.readdir(directory)
-			.then(async files => {
-				for (const file of files) {
-					if (file.includes(fileFilter)) {
-						const data = await readJsonFile(dir + file)
-						invList.push(data)
-					}
-				}
-				return callback(invList)
-			})
-			.catch(err => {
-				log.error('Error in readAllJsonFiles readdir', err)
-				return null
-			})
+		const files = await fs.readdir(directory);
+		for (const file of files) {
+			const fullFilename = directory + file;
+			const d = await readJsonFile(fullFilename);
+			fileHandlingMethod(fullFilename, d);
+		}
 	} catch (err) {
 		log.error('Error in readAllJsonFiles', err)
 		return null
@@ -72,14 +53,6 @@ const writeFile = async (filename, content) => {
 		await fs.writeFile(filename, content, { encoding: defaultEncoding, flag: 'w' });
 	} catch (err) {
 		log.error('Error in writeFile', err);
-	}
-}
-
-const appendToFile = async (filename, content) => {
-	try {
-		await fs.appendFile(filename, content, { encoding: defaultEncoding });
-	} catch (err) {
-		log.error('Error in appendToFile', err);
 	}
 }
 

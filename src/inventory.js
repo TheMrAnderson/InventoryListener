@@ -14,7 +14,7 @@ const InventoryType = {
 	Ounce: 4
 };
 
-const NotQtyInventoryTypes = [InventoryType.Bulk];
+const NonQtyInventoryTypes = [InventoryType.Bulk];
 
 const defaultItem = {
 	"ItemNumber": undefined,
@@ -26,7 +26,8 @@ const defaultItem = {
 	"Manufacturer": "",
 	"PartNumber": "",
 	"Location": "",
-	"Category": ""
+	"Category": "",
+	"Barcodes": []
 };
 
 const defaultConfig = {
@@ -37,11 +38,14 @@ const defaultConfig = {
 
 const appConfigFilename = 'appconfig.json';
 const itemFileNameSuffix = '_item.json';
+const itemFileNameSuffixObsolete = '_obsolete.json'
 
 let appConfigPath;
 let dataFilePath;
 let missingItemNumbers = undefined;
 let shoppingListPath;
+let obsoleteItems = [];
+let invList = [];
 //#endregion
 
 //#region Config
@@ -68,16 +72,26 @@ const setupApp = async () => {
 			// log.verbose(JSON.stringify(g.Globals.appConfig));
 		};
 		// log.verbose(`Consume Topic: ${g.Globals.invConsumeTopic}`);
-		files.readAllJsonFiles(dataFilePath, itemFileNameSuffix, pushInvUpdatedEventCallback);
+		await pushInvUpdatedEvent();
 	} catch (err) {
 		log.error('Error in setupApp', err);
 	}
 };
 
+const handleFileData = (filename, data) => {
+	if (filename.includes(itemFileNameSuffix)) {
+		invList.push(data)
+		refreshShoppingList(data);
+	} else if (filename.includes(itemFileNameSuffixObsolete)) {
+		obsoleteItems.push(data.ItemNumber);
+		removeIfOnShoppingList(data);
+	}
+}
+
 /**
  * Write inital config if none was found
  */
-async function loadInitialConfig() {
+const loadInitialConfig = async () => {
 	try {
 		// log.verbose('loadInitialConfig');
 		g.Globals.appConfig = defaultConfig;
@@ -107,8 +121,11 @@ const writeAppConfig = async () => {
  * @param {string} number
  * @returns File name string
  */
-function getFileName(number) {
-	return dataFilePath + number + itemFileNameSuffix;
+const getFileName = (number, isObsolete = false) => {
+	if (isObsolete)
+		return dataFilePath + number + itemFileNameSuffixObsolete;
+	else
+		return dataFilePath + number + itemFileNameSuffix;
 };
 
 /**
@@ -117,7 +134,7 @@ function getFileName(number) {
  * @param {object} newItem New inventory object
  * @returns Updated inventory object
  */
-function updateInvItem(oldItem, newItem) {
+const updateInvItem = (oldItem, newItem) => {
 	oldItem.CurrentQty = newItem.CurrentQty;
 	oldItem.MinQty = newItem.MinQty;
 	oldItem.Description = newItem.Description?.trim();
@@ -127,8 +144,10 @@ function updateInvItem(oldItem, newItem) {
 	oldItem.PartNumber = newItem.PartNumber?.trim();
 	oldItem.Location = newItem.Location?.trim();
 	oldItem.Category = newItem.Category?.trim();
+	oldItem.Obsolete = newItem.Obsolete;
+	oldItem.Barcodes = newItem.Barcodes;
 
-	if (NotQtyInventoryTypes.includes(newItem.InventoryType)) {
+	if (NonQtyInventoryTypes.includes(newItem.InventoryType)) {
 		oldItem.CurrentQty = null;
 		oldItem.MinQty = null;
 	}
@@ -144,7 +163,7 @@ function updateInvItem(oldItem, newItem) {
  * @param {string} number Inventory item number
  * @returns Inventory object from storage
  */
-async function readInvItem(number) {
+const readInvItem = async (number) => {
 	try {
 		// log.verbose(`readInvItem ${number}`);
 		const fullName = getFileName(number);
@@ -161,12 +180,12 @@ async function readInvItem(number) {
 
 /**
  * Save inventory object to storage
- * @param {object} data In-memory inventory object
+ * @param {object} data Inventory object
  */
-async function writeInvItem(data) {
+const writeInvItem = async (data) => {
 	try {
 		// log.verbose(`writeInvItem ${data.ItemNumber}`);
-		const fullName = getFileName(data.ItemNumber);
+		const fullName = getFileName(data.ItemNumber, data.Obsolete);
 		await files.writeJsonFile(fullName, data);
 	} catch (err) {
 		log.error(`Error writing item ${number}`, err);
@@ -244,7 +263,7 @@ const addUpdateItem = async (data) => {
  * Get next item number, or a missing number if configured to do so
  * @returns Next item number
  */
-function getNextItemNumber() {
+const getNextItemNumber = () => {
 	if (g.Globals.appConfig.ReuseDeletedItemNumbers == true && missingItemNumbers == undefined) {
 		return g.Globals.appConfig.NextItemNumber;
 	}
@@ -257,7 +276,7 @@ function getNextItemNumber() {
  * Return the shopping list data
  * @returns Shopping list object array
  */
-async function getShoppingList() {
+const getShoppingList = async () => {
 	try {
 		return await files.readJsonFile(shoppingListPath);
 	} catch {
@@ -269,7 +288,7 @@ async function getShoppingList() {
  * Update and publish shopping list
  * @param {Array} listData In-memory shopping list array
  */
-async function updateShoppingList(listData) {
+const updateShoppingList = async (listData) => {
 	await files.writeJsonFile(shoppingListPath, listData);
 	await m.publishShoppingList(listData);
 };
@@ -278,8 +297,8 @@ async function updateShoppingList(listData) {
  * Handle the adding/removing of items of the shopping list
  * @param {object} data Inventory object
  */
-async function addRemoveShoppingList(data) {
-	if (data.InventoryType === InventoryType.Piece) {
+const addRemoveShoppingList = async (data) => {
+	if (!NonQtyInventoryTypes.includes(data.InventoryType)) {
 		if (data.CurrentQty <= data.MinQty)
 			await addToShoppingList(data);
 		else
@@ -291,7 +310,7 @@ async function addRemoveShoppingList(data) {
  * Internal worker function for the addRemoveShoppingList function
  * @param {object} data Inventory object
  */
-async function addToShoppingList(data) {
+const addToShoppingList = async (data) => {
 	try {
 		// log.verbose('addToShoppingList');
 		let shList = await getShoppingList();
@@ -320,7 +339,7 @@ async function addToShoppingList(data) {
  * @param {object} data Inventory object
  * @returns Nothing
  */
-async function removeIfOnShoppingList(data) {
+const removeIfOnShoppingList = async (data) => {
 	let shList = await getShoppingList();
 	if (shList == null)
 		return;
@@ -340,10 +359,13 @@ const shoppingListJob = schedule.scheduleJob('* * 23 * *', function () {
 /**
  * Start the inventory update event. Callback on separate method
  */
-function pushInvUpdatedEvent() {
+const pushInvUpdatedEvent = async () => {
 	try {
 		// log.verbose('pushInvUpdatedEvent');
-		files.readAllJsonFiles(dataFilePath, itemFileNameSuffix, pushInvUpdatedEventCallback);
+		invList = [];
+		await files.readAllJsonFiles(dataFilePath, handleFileData);
+		pushInvUpdatedEventCallback(invList);
+		invList = [];
 	} catch (err) {
 		log.error('Error in pushInvUpdatedEvent', err);
 	}
@@ -354,7 +376,7 @@ function pushInvUpdatedEvent() {
  * @param {object} data Inventory object
  * @returns Nothing
  */
-function pushInvUpdatedEventCallback(data) {
+const pushInvUpdatedEventCallback = (data) => {
 	// log.verbose('pushInvUpdatedEventCallback');
 	if (data === undefined || data === null) {
 		log.error(null, 'Unable to pull existing inventory');
@@ -362,11 +384,16 @@ function pushInvUpdatedEventCallback(data) {
 		return;
 	}
 	// missingItemNumbers = findMissing(data);
-
 	m.publishInvUpdated(data);
 	const last = data[data.length - 1];
 	g.Globals.appConfig.NextItemNumber = last.ItemNumber + 1;
 	writeAppConfig();
+}
+
+const refreshShoppingList = (data) => {
+	if (!NonQtyInventoryTypes.includes(data.InventoryType)) {
+		addRemoveShoppingList(data);
+	}
 }
 
 // /**
@@ -388,5 +415,7 @@ module.exports = {
 	setupApp,
 	writeAppConfig,
 	consumeItem,
-	addUpdateItem
+	addUpdateItem,
+	shoppingListJob,
+	updateJob
 };

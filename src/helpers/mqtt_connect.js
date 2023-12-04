@@ -2,7 +2,7 @@ const log = require('../helpers/ca_log');
 const g = require('../global');
 require('dotenv').config();
 
-function onMqttConnect() {
+const onMqttConnect = () => {
 	const opt = { qos: 2, retain: true };
 	g.Globals.mqttClient.subscribe(g.Globals.invConsumeTopic, opt, function (err) {
 		if (err) {

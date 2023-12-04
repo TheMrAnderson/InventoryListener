@@ -2,7 +2,7 @@ const g = require('../global');
 require('dotenv').config();
 const inventory = require('../inventory')
 
-function onMqttMessage(topic, message, packet) {
+const onMqttMessage = (topic, message, packet) => {
 	let obj;
 	if (packet.topic != null) {
 		const stringBuf = packet.payload.toString('utf8');
