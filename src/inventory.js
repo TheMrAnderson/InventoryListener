@@ -26,7 +26,8 @@ const defaultItem = {
 	"Manufacturer": "",
 	"PartNumber": "",
 	"Location": "",
-	"Category": ""
+	"Category": "",
+	"Barcodes": []
 };
 
 const defaultConfig = {
@@ -71,9 +72,7 @@ const setupApp = async () => {
 			// log.verbose(JSON.stringify(g.Globals.appConfig));
 		};
 		// log.verbose(`Consume Topic: ${g.Globals.invConsumeTopic}`);
-		await files.readAllJsonFiles(dataFilePath, handleFileData);
-		pushInvUpdatedEventCallback(invList);
-		invList = [];
+		await pushInvUpdatedEvent();
 	} catch (err) {
 		log.error('Error in setupApp', err);
 	}
@@ -146,6 +145,7 @@ const updateInvItem = (oldItem, newItem) => {
 	oldItem.Location = newItem.Location?.trim();
 	oldItem.Category = newItem.Category?.trim();
 	oldItem.Obsolete = newItem.Obsolete;
+	oldItem.Barcodes = newItem.Barcodes;
 
 	if (NonQtyInventoryTypes.includes(newItem.InventoryType)) {
 		oldItem.CurrentQty = null;
@@ -359,10 +359,13 @@ const shoppingListJob = schedule.scheduleJob('* * 23 * *', function () {
 /**
  * Start the inventory update event. Callback on separate method
  */
-const pushInvUpdatedEvent = () => {
+const pushInvUpdatedEvent = async () => {
 	try {
 		// log.verbose('pushInvUpdatedEvent');
-		files.readAllJsonFiles(dataFilePath, itemFileNameSuffix, pushInvUpdatedEventCallback);
+		invList = [];
+		await files.readAllJsonFiles(dataFilePath, handleFileData);
+		pushInvUpdatedEventCallback(invList);
+		invList = [];
 	} catch (err) {
 		log.error('Error in pushInvUpdatedEvent', err);
 	}
