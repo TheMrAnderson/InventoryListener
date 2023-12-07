@@ -264,10 +264,15 @@ const addUpdateItem = async (data) => {
  * @returns Next item number
  */
 const getNextItemNumber = () => {
-	if (g.Globals.appConfig.ReuseDeletedItemNumbers == true && missingItemNumbers == undefined) {
+	if (g.Globals.appConfig.ReuseDeletedItemNumbers === true) {
+		if (missingItemNumbers === undefined || missingItemNumbers.length === 0) {
+			return g.Globals.appConfig.NextItemNumber;
+		} else {
+			return Math.min(...missingItemNumbers)
+		}
+	} else {
 		return g.Globals.appConfig.NextItemNumber;
 	}
-	return Math.min(...missingItemNumbers);
 }
 //#endregion
 
@@ -299,7 +304,7 @@ const updateShoppingList = async (listData) => {
  */
 const addRemoveShoppingList = async (data) => {
 	if (!NonQtyInventoryTypes.includes(data.InventoryType)) {
-		if (data.CurrentQty <= data.MinQty)
+		if (data.CurrentQty < data.MinQty)
 			await addToShoppingList(data);
 		else
 			await removeIfOnShoppingList(data);
@@ -383,10 +388,10 @@ const pushInvUpdatedEventCallback = (data) => {
 		m.publish('Unable to pull existing inventory to update ' + g.Globals.actionResponseTopic, g.Globals.actionResponseTopic, 1, true);
 		return;
 	}
-	// missingItemNumbers = findMissing(data);
+	const results = findMissing(data);
+	missingItemNumbers = results.missing;
+	g.Globals.appConfig.NextItemNumber = results.maxUsed + 1;
 	m.publishInvUpdated(data);
-	const last = data[data.length - 1];
-	g.Globals.appConfig.NextItemNumber = last.ItemNumber + 1;
 	writeAppConfig();
 }
 
@@ -396,15 +401,28 @@ const refreshShoppingList = (data) => {
 	}
 }
 
-// /**
-//  * Find missing ItemNumbers in the array
-//  * @param {*} data Inventory data array
-//  * @returns Array of missing numbers
-//  */
-// const findMissing = data => {
-// 	// Taking this out for now
-// 	return [];
-// }
+/**
+ * Find missing ItemNumbers in the array
+ * @param {*} data Inventory data array
+ * @returns missing- Array of missing numbers, maxUsed- Highest used number, minUsed- Lowest used number]
+ */
+const findMissing = data => {
+	const itemNumbers = data.map((d) => d.ItemNumber);
+	const max = Math.max(...itemNumbers); // Will find highest number
+	const min = Math.min(...itemNumbers); // Will find lowest number
+	const missing = [];
+
+	for (let i = min; i <= max; i++) {
+		if (!itemNumbers.includes(i)) { // Checking whether i(current value) present in num(argument)
+			missing.push(i); // Adding numbers which are not in num(argument) array
+		}
+	}
+	return {
+		missing: missing,
+		maxUsed: max,
+		minUsed: min
+	};
+}
 
 const updateJob = schedule.scheduleJob('* * 23 * *', function () {
 	pushInvUpdatedEvent();
