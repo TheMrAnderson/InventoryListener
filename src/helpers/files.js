@@ -16,7 +16,7 @@ const readFile = async (fileName) => {
 
 const readJsonFile = async (fullFilePath) => {
 	try {
-		let raw = await readFile(fullFilePath)
+		const raw = await readFile(fullFilePath)
 		if (raw != null) {
 			return JSON.parse(raw)
 		}
