@@ -3,6 +3,8 @@ name: Docker Image Prod - Stable
 on:
   pull_request:
     branches: ["prod"]
+  push:
+    branches: ["prod"]
 
 jobs:
   build:
