@@ -54,7 +54,7 @@ let invList = [];
  */
 const setupApp = async () => {
 	try {
-		appConfigPath = g.Globals.dataFolder + 'config/';
+		appConfigPath = `${g.Globals.dataFolder}config/`;
 		dataFilePath = g.Globals.dataFolder;
 		shoppingListPath = `${dataFilePath}shoppingList.json`
 		// log.verbose(`setupApp - appConfigPath: ${appConfigPath}, dataFilePath: ${dataFilePath}`);
@@ -66,7 +66,7 @@ const setupApp = async () => {
 			if (err) log.error('Error making dataFilePath', err)
 			g.exitAppEarly('Unable to make Data directory');
 		});
-		g.Globals.appConfig = await files.readJsonFile(appConfigPath + appConfigFilename);
+		g.Globals.appConfig = await files.readJsonFile(`${appConfigPath}${appConfigFilename}`);
 		if (g.Globals.appConfig == null) {
 			await loadInitialConfig();
 			// log.verbose(JSON.stringify(g.Globals.appConfig));
