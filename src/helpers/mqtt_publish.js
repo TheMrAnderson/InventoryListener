@@ -10,7 +10,7 @@ const publish = async (data, topic, qos = 0, retain = false) => {
 		});
 	}
 	catch (err) {
-		console.log('Error publishing MQTT message to topic', err)
+		console.log(`Error publishing MQTT message to topic - topic ${topic}, message ${data}`, err)
 	}
 }
 
