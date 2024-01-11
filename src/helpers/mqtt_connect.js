@@ -3,7 +3,7 @@ const g = require('../global');
 require('dotenv').config();
 
 const onMqttConnect = (connack) => {
-	log.verbose(`MQTT Connect - connack ${connack}`);
+	log.verbose(`MQTT Connect - connack ${JSON.stringify(connack)}`);
 	const opt = { qos: 2, retain: true };
 	g.Globals.mqttClient.subscribe(g.Globals.invConsumeTopic, opt, function (err) {
 		if (err) {
@@ -34,7 +34,7 @@ const onMqttClose = () => {
 }
 
 const onMqttDisconnect = (packet) => {
-	log.verbose(`MQTT Connection Disconnected - packet ${packet}`);
+	log.verbose(`MQTT Connection Disconnected - packet ${JSON.stringify(packet)}`);
 }
 
 const onMqttOffline = () => {
