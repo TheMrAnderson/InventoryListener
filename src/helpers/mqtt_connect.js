@@ -2,7 +2,8 @@ const log = require('../helpers/ca_log');
 const g = require('../global');
 require('dotenv').config();
 
-const onMqttConnect = () => {
+const onMqttConnect = (connack) => {
+	log.verbose(`MQTT Connect - connack ${connack}`);
 	const opt = { qos: 2, retain: true };
 	g.Globals.mqttClient.subscribe(g.Globals.invConsumeTopic, opt, function (err) {
 		if (err) {
@@ -24,7 +25,32 @@ const onMqttConnect = () => {
 	log.verbose('App online and listening for events');
 }
 
+const onMqttReconnect = () => {
+	log.verbose('MQTT Connection Reconnected');
+}
+
+const onMqttClose = () => {
+	log.verbose('MQTT Connection Closed');
+}
+
+const onMqttDisconnect = (packet) => {
+	log.verbose(`MQTT Connection Disconnected - packet ${packet}`);
+}
+
+const onMqttOffline = () => {
+	log.verbose('MQTT Client Offline');
+}
+
+const onMqttError = (err) => {
+	log.error('MQTT Error', err)
+}
+
 
 module.exports = {
-	onMqttConnect
+	onMqttConnect,
+	onMqttReconnect,
+	onMqttClose,
+	onMqttDisconnect,
+	onMqttOffline,
+	onMqttError
 };
