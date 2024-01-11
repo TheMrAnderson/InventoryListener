@@ -37,15 +37,15 @@ const defaultConfig = {
 };
 
 const appConfigFilename = 'appconfig.json';
+const shoppingListFilename = 'shoppingList.json';
 const itemFileNameSuffix = '_item.json';
 const itemFileNameSuffixObsolete = '_obsolete.json'
 
-let appConfigPath;
-let dataFilePath;
 let missingItemNumbers = undefined;
-let shoppingListPath;
 let obsoleteItems = [];
 let invList = [];
+let appConfigFullPath;
+let shoppingListFullPath;
 //#endregion
 
 //#region Config
@@ -54,19 +54,19 @@ let invList = [];
  */
 const setupApp = async () => {
 	try {
-		appConfigPath = `${g.Globals.dataFolder}config/`;
-		dataFilePath = g.Globals.dataFolder;
-		shoppingListPath = `${dataFilePath}shoppingList.json`
-		// log.verbose(`setupApp - appConfigPath: ${appConfigPath}, dataFilePath: ${dataFilePath}`);
+		const appConfigPath = `${g.Globals.dataFolder}config/`;
+		appConfigFullPath = `${appConfigPath}${appConfigFilename}`;
+		shoppingListFullPath = `${g.Globals.dataFolder}${shoppingListFilename}`;
+		// log.verbose(`setupApp - appConfig: ${appConfigFullPath}, dataPath: ${g.Globals.dataFolder}`);
 		fs.mkdirSync(appConfigPath, { recursive: true }, (err) => {
-			if (err) log.error('Error making appConfigPath', err);
-			g.exitAppEarly('Unable to make AppConfig directory');
+			if (err) log.error(`Error making app config directory: ${appConfigPath}`, err);
+			g.exitAppEarly('Unable to make app config directory');
 		});
-		fs.mkdirSync(dataFilePath, { recursive: true }, (err) => {
-			if (err) log.error('Error making dataFilePath', err)
-			g.exitAppEarly('Unable to make Data directory');
+		fs.mkdirSync(g.Globals.dataFolder, { recursive: true }, (err) => {
+			if (err) log.error(`Error making data directory: ${g.Globals.dataFolder}`, err)
+			g.exitAppEarly('Unable to make data directory');
 		});
-		g.Globals.appConfig = await files.readJsonFile(`${appConfigPath}${appConfigFilename}`);
+		g.Globals.appConfig = await files.readJsonFile(appConfigFullPath);
 		if (g.Globals.appConfig == null) {
 			await loadInitialConfig();
 			// log.verbose(JSON.stringify(g.Globals.appConfig));
@@ -108,7 +108,7 @@ const loadInitialConfig = async () => {
 const writeAppConfig = async () => {
 	try {
 		// log.verbose('writeAppConfig');
-		await files.writeJsonFile(appConfigPath + appConfigFilename, g.Globals.appConfig);
+		await files.writeJsonFile(appConfigFullPath, g.Globals.appConfig);
 	} catch (err) {
 		log.error('Error in writeAppConfig', err);
 	}
@@ -123,9 +123,9 @@ const writeAppConfig = async () => {
  */
 const getFileName = (number, isObsolete = false) => {
 	if (isObsolete)
-		return dataFilePath + number + itemFileNameSuffixObsolete;
+		return g.Globals.dataFolder + number + itemFileNameSuffixObsolete;
 	else
-		return dataFilePath + number + itemFileNameSuffix;
+		return g.Globals.dataFolder + number + itemFileNameSuffix;
 };
 
 /**
@@ -283,7 +283,7 @@ const getNextItemNumber = () => {
  */
 const getShoppingList = async () => {
 	try {
-		return await files.readJsonFile(shoppingListPath);
+		return await files.readJsonFile(shoppingListFullPath);
 	} catch {
 		return [];
 	}
@@ -294,7 +294,7 @@ const getShoppingList = async () => {
  * @param {Array} listData In-memory shopping list array
  */
 const updateShoppingList = async (listData) => {
-	await files.writeJsonFile(shoppingListPath, listData);
+	await files.writeJsonFile(shoppingListFullPath, listData);
 	await m.publishShoppingList(listData);
 };
 
@@ -368,7 +368,7 @@ const pushInvUpdatedEvent = async () => {
 	try {
 		// log.verbose('pushInvUpdatedEvent');
 		invList = [];
-		await files.readAllJsonFiles(dataFilePath, handleFileData);
+		await files.readAllJsonFiles(g.Globals.dataFolder, handleFileData);
 		pushInvUpdatedEventCallback(invList);
 		invList = [];
 	} catch (err) {
