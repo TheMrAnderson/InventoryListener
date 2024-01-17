@@ -207,18 +207,17 @@ const consumeItem = async (number) => {
 			log.error(`Invalid inventory item consumed: ${number}`);
 			return;
 		}
-		if (data.InventoryType == InventoryType.Piece) {
+		if (!NonQtyInventoryTypes.includes(data.InventoryType)) {
 			data.CurrentQty--;
 			await writeInvItem(data);
 			await addRemoveShoppingList(data);
-		}
-		if (data.InventoryType == InventoryType.Bulk) {
-			addToShoppingList(data);
+		} else {
+			await addToShoppingList(data);
 		}
 	} catch (err) {
 		log.error('Error in consumeItem', err);
 	} finally {
-		pushInvUpdatedEvent();
+		await pushInvUpdatedEvent();
 	}
 };
 //#endregion
@@ -317,25 +316,29 @@ const addRemoveShoppingList = async (data) => {
  */
 const addToShoppingList = async (data) => {
 	try {
-		// log.verbose('addToShoppingList');
+		log.verbose(`addToShoppingList - ${JSON.stringify(data)}`);
 		let shList = await getShoppingList();
 		if (shList != null) {
-			const exists = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber));
-			if (!exists)
+			const shListIncludes = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber));
+			if (!shListIncludes)
+				// Not on the shopping list - time to add it
 				shList.push(data);
 			else {
 				const index = shList.findIndex(l => l.ItemNumber === data.ItemNumber);
 				let existing = shList[index];
-				existing.CurrentQty = data.CurrentQty;
-				shList[index] = existing;
+				// Existing is the existing item on the shopping list, not to be confused with
+				//  whether or not it exists, which is checked above
+				existing = updateInvItem(existing, data);
 			};
 		} else {
 			shList = [];
 			shList.push(data);
 		}
 		updateShoppingList(shList);
+		return true;
 	} catch (err) {
 		log.error('Error in addToShoppingList', err);
+		return false;
 	}
 }
 
@@ -435,5 +438,6 @@ module.exports = {
 	consumeItem,
 	addUpdateItem,
 	shoppingListJob,
-	updateJob
+	updateJob,
+	addToShoppingList
 };
