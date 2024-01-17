@@ -57,7 +57,7 @@ const setupApp = async () => {
 		const appConfigPath = `${g.Globals.dataFolder}config/`;
 		appConfigFullPath = `${appConfigPath}${appConfigFilename}`;
 		shoppingListFullPath = `${g.Globals.dataFolder}${shoppingListFilename}`;
-		// log.verbose(`setupApp - appConfig: ${appConfigFullPath}, dataPath: ${g.Globals.dataFolder}`);
+		log.verbose('setupApp' , {appConfig: appConfigFullPath, dataPath: g.Globals.dataFolder});
 		fs.mkdirSync(appConfigPath, { recursive: true }, (err) => {
 			if (err) log.error(`Error making app config directory: ${appConfigPath}`, err);
 			g.exitAppEarly('Unable to make app config directory');
@@ -77,16 +77,6 @@ const setupApp = async () => {
 		log.error('Error in setupApp', err);
 	}
 };
-
-const handleFileData = (filename, data) => {
-	if (filename.includes(itemFileNameSuffix)) {
-		invList.push(data)
-		refreshShoppingList(data);
-	} else if (filename.includes(itemFileNameSuffixObsolete)) {
-		obsoleteItems.push(data.ItemNumber);
-		removeIfOnShoppingList(data);
-	}
-}
 
 /**
  * Write inital config if none was found
@@ -316,7 +306,7 @@ const addRemoveShoppingList = async (data) => {
  */
 const addToShoppingList = async (data) => {
 	try {
-		log.verbose(`addToShoppingList - ${JSON.stringify(data)}`);
+		log.verbose('addToShoppingList', data);
 		let shList = await getShoppingList();
 		if (shList != null) {
 			const shListIncludes = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber));
@@ -379,6 +369,16 @@ const pushInvUpdatedEvent = async () => {
 	}
 }
 
+const handleFileData = async (filename, data) => {
+	if (filename.includes(itemFileNameSuffix)) {
+		invList.push(data)
+		await addRemoveShoppingList(data);
+	} else if (filename.includes(itemFileNameSuffixObsolete)) {
+		obsoleteItems.push(data.ItemNumber);
+		removeIfOnShoppingList(data);
+	}
+}
+
 /**
  * Callback method from pushInvUpdatedEvent
  * @param {object} data Inventory object
@@ -396,12 +396,6 @@ const pushInvUpdatedEventCallback = (data) => {
 	g.Globals.appConfig.NextItemNumber = results.maxUsed + 1;
 	m.publishInvUpdated(data);
 	writeAppConfig();
-}
-
-const refreshShoppingList = (data) => {
-	if (!NonQtyInventoryTypes.includes(data.InventoryType)) {
-		addRemoveShoppingList(data);
-	}
 }
 
 /**

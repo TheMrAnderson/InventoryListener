@@ -1,30 +1,31 @@
 const g = require('../global');
 const m = require('./mqtt_publish');
 
-const error = async (message, err) => {
+const error = async (message, err, data) => {
 	try {
-		await sendData(createLogObject(message, err, 'Error'));
+		await sendData(createLogObject(message, err, 'Error', data));
 	} catch (err) {
 		console.log('Error in ca_log.error', err);
 	}
 }
 
-const verbose = async (message) => {
+const verbose = async (message, data) => {
 	try {
-		await sendData(createLogObject(message, null, 'Verbose'));
+		await sendData(createLogObject(message, null, 'Verbose', data));
 	} catch (err) {
 		console.log('Error in ca_log.verbose', err);
 	}
 }
 
-function createLogObject(message, err, logType) {
+function createLogObject(message, err, logType, data) {
 	const obj =
 	{
 		Source: 'CA Inventory Listener',
 		EventTime: new Date().toISOString(),
 		Message: message,
 		Error: err,
-		LogType: logType
+		LogType: logType,
+		Data: JSON.stringify(data)
 	};
 	let objString = JSON.stringify(obj, null, 2);
 	return objString;
