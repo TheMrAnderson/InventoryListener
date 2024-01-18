@@ -25,10 +25,12 @@ let args = {
 };
 
 inventory.setupApp(args);
+const clientId = `invlistener_${process.env.USERNAME}_${getMyIPAddress()}`
+log.debug('ClientId', clientId);
 
 g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
 	{
-		clientId: `invlistener_${process.env.USERNAME}_${process.env.PWD}`,
+		clientId: clientId,
 		clean: false,
 		reconnectPeriod: 5000,
 		SessionExpiryInterval: 0,
@@ -57,3 +59,7 @@ p.on('SIGTERM', () => {
 p.on('SIGINT', () => {
 	cleanup();
 })
+
+function getMyIPAddress() {
+	return require('child_process').execSync("ifconfig | grep inet | grep -v inet6 | awk '{gsub(/addr:/,\"\");print $2}'").toString().trim().split("\n");
+}
