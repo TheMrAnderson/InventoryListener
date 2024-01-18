@@ -30,7 +30,9 @@ g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
 	{
 		clientId: `invlistener_${process.env.USERNAME}_${process.env.PWD}`,
 		clean: false,
-		reconnectPeriod: 5000
+		reconnectPeriod: 5000,
+		SessionExpiryInterval: 0,
+		KeepAlive: 30
 	});
 
 g.Globals.mqttClient.on('connect', (connack) => mqC.onMqttConnect(connack));
