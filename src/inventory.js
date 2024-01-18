@@ -46,6 +46,7 @@ let obsoleteItems = [];
 let invList = [];
 let shoppingList = [];
 let shoppingListLastSet;
+let shouldAllowExternalShoppingListUpdates = false;
 let appConfigFullPath;
 let shoppingListFullPath;
 //#endregion
@@ -294,16 +295,21 @@ const getShoppingList = async () => {
 	log.debug('getShoppingList');
 	try {
 		shoppingList = await files.readJsonFile(shoppingListFullPath);
+		shouldAllowExternalShoppingListUpdates = false;
 		return;
 	} catch (err) {
 		log.error('Error reading shopping list from file', err);
+		shouldAllowExternalShoppingListUpdates = true;
 	}
 };
 
 const externalShoppingListUpdate = (data) => {
+	if (!shouldAllowExternalShoppingListUpdates)
+		return;
 	var difference = shoppingListLastSet - new Date();
 	if (difference < 5000)
 		return;
+	shouldAllowExternalShoppingListUpdates = false; // Set it now to prevent future updates from overwriting the list
 	shoppingList = data;
 	shoppingListLastSet = new Date();
 }
