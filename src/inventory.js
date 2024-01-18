@@ -44,6 +44,8 @@ const itemFileNameSuffixObsolete = '_obsolete.json'
 let missingItemNumbers = undefined;
 let obsoleteItems = [];
 let invList = [];
+let shoppingList = [];
+let shoppingListLastSet;
 let appConfigFullPath;
 let shoppingListFullPath;
 //#endregion
@@ -52,12 +54,25 @@ let shoppingListFullPath;
 /**
  * Configure application
  */
-const setupApp = async () => {
+const setupApp = async (args) => {
 	try {
+		// First set globals
+		g.Globals.dataFolder = args.dataFolder || '/data/';
+		g.Globals.logTopic = args.logTopic || 'logs';
+		const topicFolder = args.topicFolder || 'inventory_ca';
+		g.Globals.invConsumeTopic = args.invConsumeTopic || `${topicFolder}/consume`;
+		g.Globals.addUpdateItemTopic = args.addUpdateItemTopic || `${topicFolder}/addupdate`;
+		g.Globals.invUpdatedTopic = args.invUpdatedTopic || `${topicFolder}/updated`;
+		g.Globals.actionResponseTopic = args.actionResponseTopic || `${topicFolder}/actionresponse`;
+		g.Globals.shoppingListTopic = args.shoppingListTopic || `${topicFolder}/shoppinglist`;
+		g.Globals.mqttServerAddress = args.mqttServerAddress;
+		g.Globals.logLevel = args.logLevel;
+
+		// Now can refer to the globals and setup this class
 		const appConfigPath = `${g.Globals.dataFolder}config/`;
 		appConfigFullPath = `${appConfigPath}${appConfigFilename}`;
 		shoppingListFullPath = `${g.Globals.dataFolder}${shoppingListFilename}`;
-		log.verbose('setupApp' , {appConfig: appConfigFullPath, dataPath: g.Globals.dataFolder});
+		log.debug('setupApp', { appConfigPath: appConfigFullPath, dataPath: g.Globals.dataFolder });
 		fs.mkdirSync(appConfigPath, { recursive: true }, (err) => {
 			if (err) log.error(`Error making app config directory: ${appConfigPath}`, err);
 			g.exitAppEarly('Unable to make app config directory');
@@ -69,9 +84,14 @@ const setupApp = async () => {
 		g.Globals.appConfig = await files.readJsonFile(appConfigFullPath);
 		if (g.Globals.appConfig == null) {
 			await loadInitialConfig();
-			// log.verbose(JSON.stringify(g.Globals.appConfig));
-		};
-		// log.verbose(`Consume Topic: ${g.Globals.invConsumeTopic}`);
+		} else {
+			// Add potentially missing properties
+			if (g.Globals.appConfig.ReuseDeletedItemNumbers === undefined)
+				g.Globals.appConfig.ReuseDeletedItemNumbers = defaultConfig.ReuseDeletedItemNumbers;
+		}
+		g.validateConfig();
+		await getShoppingList();
+		log.debug('setupAppComplete', g.Globals.appConfig);
 		await pushInvUpdatedEvent();
 	} catch (err) {
 		log.error('Error in setupApp', err);
@@ -83,10 +103,10 @@ const setupApp = async () => {
  */
 const loadInitialConfig = async () => {
 	try {
-		// log.verbose('loadInitialConfig');
+		log.debug('loadInitialConfig');
 		g.Globals.appConfig = defaultConfig;
 		await writeAppConfig();
-		addRemoveShoppingList([]);
+		await files.writeJsonFile(shoppingListFullPath, shoppingList);
 	} catch (err) {
 		log.error('Error in loadInitialConfig', err);
 	}
@@ -97,7 +117,7 @@ const loadInitialConfig = async () => {
  */
 const writeAppConfig = async () => {
 	try {
-		// log.verbose('writeAppConfig');
+		log.debug('writeAppConfig');
 		await files.writeJsonFile(appConfigFullPath, g.Globals.appConfig);
 	} catch (err) {
 		log.error('Error in writeAppConfig', err);
@@ -125,6 +145,7 @@ const getFileName = (number, isObsolete = false) => {
  * @returns Updated inventory object
  */
 const updateInvItem = (oldItem, newItem) => {
+	log.debug('Updating inv item', { 'oldItem': oldItem, 'newItem': newItem });
 	oldItem.CurrentQty = newItem.CurrentQty;
 	oldItem.MinQty = newItem.MinQty;
 	oldItem.Description = newItem.Description?.trim();
@@ -142,7 +163,6 @@ const updateInvItem = (oldItem, newItem) => {
 		oldItem.MinQty = null;
 	}
 
-	// log.verbose(oldItem);
 	return oldItem;
 };
 //#endregion
@@ -155,7 +175,7 @@ const updateInvItem = (oldItem, newItem) => {
  */
 const readInvItem = async (number) => {
 	try {
-		// log.verbose(`readInvItem ${number}`);
+		log.debug(`readInvItem ${number}`);
 		const fullName = getFileName(number);
 		const data = await files.readJsonFile(fullName);
 		if (data == null) {
@@ -174,7 +194,7 @@ const readInvItem = async (number) => {
  */
 const writeInvItem = async (data) => {
 	try {
-		// log.verbose(`writeInvItem ${data.ItemNumber}`);
+		log.debug(`writeInvItem ${data.ItemNumber}`);
 		const fullName = getFileName(data.ItemNumber, data.Obsolete);
 		await files.writeJsonFile(fullName, data);
 	} catch (err) {
@@ -191,7 +211,7 @@ const writeInvItem = async (data) => {
  */
 const consumeItem = async (number) => {
 	try {
-		// log.verbose('Consuming ' + number);
+		log.debug(`Consuming ${number}`);
 		const data = await readInvItem(number);
 		if (data == null) {
 			log.error(`Invalid inventory item consumed: ${number}`);
@@ -253,6 +273,7 @@ const addUpdateItem = async (data) => {
  * @returns Next item number
  */
 const getNextItemNumber = () => {
+	log.debug('getNextItemNumber');
 	if (g.Globals.appConfig.ReuseDeletedItemNumbers === true) {
 		if (missingItemNumbers === undefined || missingItemNumbers.length === 0) {
 			return g.Globals.appConfig.NextItemNumber;
@@ -267,24 +288,38 @@ const getNextItemNumber = () => {
 
 //#region Shopping List
 /**
- * Return the shopping list data
- * @returns Shopping list object array
+ * Read shopping list from file and update the shoppingList variable
  */
 const getShoppingList = async () => {
+	log.debug('getShoppingList');
 	try {
-		return await files.readJsonFile(shoppingListFullPath);
-	} catch {
-		return [];
+		shoppingList = await files.readJsonFile(shoppingListFullPath);
+		return;
+	} catch (err) {
+		log.error('Error reading shopping list from file', err);
 	}
 };
+
+const externalShoppingListUpdate = (data) => {
+	var difference = shoppingListLastSet - new Date();
+	if (difference < 5000)
+		return;
+	shoppingList = data;
+	shoppingListLastSet = new Date();
+}
 
 /**
  * Update and publish shopping list
  * @param {Array} listData In-memory shopping list array
  */
 const updateShoppingList = async (listData) => {
-	await files.writeJsonFile(shoppingListFullPath, listData);
-	await m.publishShoppingList(listData);
+	shoppingListLastSet = new Date();
+	if (JSON.stringify(listData) == JSON.stringify(shoppingList))
+		return;
+	log.debug('updateShoppingList', listData);
+	shoppingList = listData;
+	await files.writeJsonFile(shoppingListFullPath, shoppingList);
+	await m.publishShoppingList(shoppingList);
 };
 
 /**
@@ -292,6 +327,7 @@ const updateShoppingList = async (listData) => {
  * @param {object} data Inventory object
  */
 const addRemoveShoppingList = async (data) => {
+	log.debug('addRemoveShoppingList', data);
 	if (!NonQtyInventoryTypes.includes(data.InventoryType)) {
 		if (data.CurrentQty < data.MinQty)
 			await addToShoppingList(data);
@@ -305,9 +341,9 @@ const addRemoveShoppingList = async (data) => {
  * @param {object} data Inventory object
  */
 const addToShoppingList = async (data) => {
+	log.debug('addToShoppingList', data);
 	try {
-		log.verbose('addToShoppingList', data);
-		let shList = await getShoppingList();
+		let shList = JSON.parse(JSON.stringify(shoppingList));
 		if (shList != null) {
 			const shListIncludes = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber));
 			if (!shListIncludes)
@@ -324,7 +360,7 @@ const addToShoppingList = async (data) => {
 			shList = [];
 			shList.push(data);
 		}
-		updateShoppingList(shList);
+		await updateShoppingList(shList);
 		return true;
 	} catch (err) {
 		log.error('Error in addToShoppingList', err);
@@ -338,7 +374,8 @@ const addToShoppingList = async (data) => {
  * @returns Nothing
  */
 const removeIfOnShoppingList = async (data) => {
-	let shList = await getShoppingList();
+	log.debug('removeIfOnShoppingList', data);
+	let shList = shoppingList;
 	if (shList == null)
 		return;
 	const exists = shList.includes(shList.find(l => l.ItemNumber === data.ItemNumber));
@@ -349,7 +386,7 @@ const removeIfOnShoppingList = async (data) => {
 }
 
 const shoppingListJob = schedule.scheduleJob('* * 23 * *', function () {
-	getShoppingList();
+	shoppingList;
 });
 //#endregion
 
@@ -359,7 +396,7 @@ const shoppingListJob = schedule.scheduleJob('* * 23 * *', function () {
  */
 const pushInvUpdatedEvent = async () => {
 	try {
-		// log.verbose('pushInvUpdatedEvent');
+		log.debug('pushInvUpdatedEvent');
 		invList = [];
 		await files.readAllJsonFiles(g.Globals.dataFolder, handleFileData);
 		pushInvUpdatedEventCallback(invList);
@@ -385,7 +422,7 @@ const handleFileData = async (filename, data) => {
  * @returns Nothing
  */
 const pushInvUpdatedEventCallback = (data) => {
-	// log.verbose('pushInvUpdatedEventCallback');
+	log.debug('pushInvUpdatedEventCallback');
 	if (data === undefined || data === null) {
 		log.error(null, 'Unable to pull existing inventory');
 		m.publish('Unable to pull existing inventory to update ' + g.Globals.actionResponseTopic, g.Globals.actionResponseTopic, 1, true);
@@ -433,5 +470,6 @@ module.exports = {
 	addUpdateItem,
 	shoppingListJob,
 	updateJob,
-	addToShoppingList
+	addToShoppingList,
+	externalShoppingListUpdate
 };
