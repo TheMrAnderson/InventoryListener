@@ -36,6 +36,7 @@ const readAllJsonFiles = async (directory, fileHandlingMethod) => {
 	try {
 		const files = await fs.readdir(directory);
 		for (const file of files) {
+			log.debug(`Reading ${file}`);
 			if (file == 'config')
 				continue;
 			const fullFilename = directory + file;
