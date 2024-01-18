@@ -15,13 +15,7 @@ beforeEach(() => {
 test('adds item to shopping list', () => {
 	const data = {
 		"ItemNumber": "1",
-		"Description": "M8 x 0.8 Cap Head Screw",
-		"SourceURL": null,
-		"InventoryType": 1,
-		"Manufacturer": "ACME",
-		"PartNumber": "123ABC",
-		"Location": "Metric Tackle Box",
-		"Category": "Hardware"
+		"InventoryType": 1
 	}
 	expect(inv.addToShoppingList(data)).toBe(true);
 });
