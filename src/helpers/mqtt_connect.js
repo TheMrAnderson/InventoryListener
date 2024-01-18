@@ -3,11 +3,11 @@ const g = require('../global');
 require('dotenv').config();
 
 const onMqttConnect = (connack) => {
-	log.verbose(`MQTT Connect - connack ${JSON.stringify(connack)}`);
+	log.debug('MQTT Connect', connack);
 	const opt = { qos: 2, retain: true };
 	g.Globals.mqttClient.subscribe(g.Globals.invConsumeTopic, opt, function (err) {
 		if (err) {
-			const msg = `Error subscribing to inventory consume topic ${g.Globals.invConsumeTopic}`
+			const msg = `Error subscribing to inventory consume topic ${g.Globals.invConsumeTopic}`;
 			log.error(msg, err);
 			g.exitAppEarly(msg);
 		}
@@ -15,12 +15,21 @@ const onMqttConnect = (connack) => {
 
 	g.Globals.mqttClient.subscribe(g.Globals.addUpdateItemTopic, opt, function (err) {
 		if (err) {
-			const msg = `Error subscribing to add update topic ${g.Globals.addUpdateItemTopic}`
+			const msg = `Error subscribing to add update topic ${g.Globals.addUpdateItemTopic}`;
 			log.error(msg, err);
 			g.exitAppEarly(msg);
 			return;
 		}
 	});
+
+	g.Globals.mqttClient.subscribe(g.Globals.shoppingListTopic, opt, function (err) {
+		if (err) {
+			const msg = `Error subscribing to shopping list topic ${g.Globals.shoppingListTopic}`;
+			log.error(msg, err);
+			g.exitAppEarly(msg);
+			return;
+		}
+	})
 
 	log.verbose('App online and listening for events');
 }
@@ -34,7 +43,7 @@ const onMqttClose = () => {
 }
 
 const onMqttDisconnect = (packet) => {
-	log.verbose(`MQTT Connection Disconnected - packet ${JSON.stringify(packet)}`);
+	log.verbose('MQTT Connection Disconnected', { packet: packet });
 }
 
 const onMqttOffline = () => {

@@ -36,7 +36,7 @@ New Inventory Object:
 
 ```json
 {
-  "ItemNumber": "1000",
+  "ItemNumber": 1000,
   "CurrentQty": 3,
   "MinQty": 1,
   "Description": "M8 x 0.8 Cap Head Screw",

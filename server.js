@@ -11,17 +11,20 @@ require('dotenv').config();
 p.stdin.resume();
 
 // Read environment variables
-g.Globals.dataFolder = process.env.DATAFOLDER || '/data/';
-g.Globals.logTopic = process.env.LOGTOPIC || 'logs';
-const topicFolder = process.env.TOPICFOLDER || 'inventory_ca';
-g.Globals.invConsumeTopic = process.env.INVENTORYCONSUMETOPIC || `${topicFolder}/consume`;
-g.Globals.addUpdateItemTopic = process.env.INVENTORYADDUPDATETOPIC || `${topicFolder}/addupdate`;
-g.Globals.invUpdatedTopic = process.env.INVENTORYUPDATEDTOPIC || `${topicFolder}/updated`;
-g.Globals.actionResponseTopic = process.env.ACTIONRESPONSETOPIC || `${topicFolder}/actionresponse`;
-g.Globals.shoppingListTopic = process.env.SHOPPINGLISTTOPIC || `${topicFolder}/shoppinglist`;
-g.Globals.mqttServerAddress = process.env.MQTTSERVERADDRESS;
-g.validateConfig();
-inventory.setupApp();
+let args = {
+	dataFolder: process.env.DATAFOLDER,
+	logTopic: process.env.LOGTOPIC,
+	topicFolder: process.env.TOPICFOLDER,
+	invConsumeTopic: process.env.INVENTORYCONSUMETOPIC,
+	addUpdateItemTopic: process.env.INVENTORYADDUPDATETOPIC,
+	invUpdatedTopic: process.env.INVENTORYUPDATEDTOPIC,
+	actionResponseTopic: process.env.ACTIONRESPONSETOPIC,
+	shoppingListTopic: process.env.SHOPPINGLISTTOPIC,
+	mqttServerAddress: process.env.MQTTSERVERADDRESS,
+	logLevel: process.env.LOGLEVEL
+};
+
+inventory.setupApp(args);
 
 g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
 	{

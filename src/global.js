@@ -11,11 +11,14 @@ var Globals = {
 	actionResponseTopic: undefined,
 	shoppingListTopic: undefined,
 	mqttServerAddress: undefined,
-	invDataList: undefined
+	invDataList: undefined,
+	logLevel: 'Error'
 };
 
 const validateConfig = () => {
 	let msg = '';
+	if (Globals.appConfig === undefined)
+		msg += 'AppConfig not specified. ';
 	if (Globals.dataFolder === undefined)
 		msg += 'Data folder not specified. ';
 	if (Globals.logTopic === undefined)
