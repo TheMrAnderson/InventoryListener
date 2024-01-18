@@ -38,7 +38,7 @@ function shouldLog(level) {
 		return true;
 	if (level === 'Error')
 		return true;
-	if (level === 'Debug' && g.Globals.logLevel.includes('Verbose'))
+	if (level === 'Verbose' && g.Globals.logLevel.includes('Debug'))
 		return true; // Debug should also log verbose logs, even if the setup didn't specifically call for it
 	return false;
 }
