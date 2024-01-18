@@ -14,7 +14,8 @@
         "DATAFOLDER": "/home/rooster/Downloads/inventory/",
         "LOGTOPIC": "logs",
         "TOPICFOLDER": "inventory_dev",
-        "MQTTSERVERADDRESS": "mqtt://172.30.62.2"
+        "MQTTSERVERADDRESS": "mqtt://172.30.62.2",
+        "LOGLEVEL": "Verbose,Debug"
       }
     }
   ]
