@@ -333,7 +333,7 @@ const updateShoppingList = async (listData) => {
  * @param {object} data Inventory object
  */
 const addRemoveShoppingList = async (data) => {
-	log.debug('addRemoveShoppingList', data);
+	log.trace('addRemoveShoppingList', data);
 	if (!NonQtyInventoryTypes.includes(data.InventoryType)) {
 		if (data.CurrentQty < data.MinQty)
 			await addToShoppingList(data);
@@ -347,7 +347,7 @@ const addRemoveShoppingList = async (data) => {
  * @param {object} data Inventory object
  */
 const addToShoppingList = async (data) => {
-	log.debug('addToShoppingList', data);
+	log.trace('addToShoppingList', data);
 	try {
 		let shList = JSON.parse(JSON.stringify(shoppingList));
 		if (shList != null) {
@@ -380,7 +380,7 @@ const addToShoppingList = async (data) => {
  * @returns Nothing
  */
 const removeIfOnShoppingList = async (data) => {
-	log.debug('removeIfOnShoppingList', data);
+	log.trace('removeIfOnShoppingList', data);
 	let shList = shoppingList;
 	if (shList == null)
 		return;

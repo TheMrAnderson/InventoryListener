@@ -5,6 +5,7 @@ const inventory = require('./src/inventory');
 const mqtt = require('mqtt');
 const mqC = require('./src/helpers/mqtt_connect');
 const { onMqttMessage } = require('./src/helpers/mqtt_message');
+const crypto = require('crypto');
 require('dotenv').config();
 
 // Begin reading from stdin so the process does not exit
@@ -26,11 +27,18 @@ let args = {
 
 inventory.setupApp(args);
 
+// Create a unique identifier for this instance, then hash it for security purposes
+const clientId = `invlistener_${process.env.USERNAME}_${g.Globals.invConsumeTopic}_${g.Globals.dataFolder}`
+const clientIdHash = crypto.createHash('sha256').update(clientId).digest('base64');
+log.verbose('ClientId', clientIdHash);
+
 g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
 	{
-		clientId: `invlistener_${process.env.USERNAME}_${process.env.PWD}`,
+		clientId: clientIdHash,
 		clean: false,
-		reconnectPeriod: 5000
+		reconnectPeriod: 5000,
+		SessionExpiryInterval: 0,
+		KeepAlive: 30
 	});
 
 g.Globals.mqttClient.on('connect', (connack) => mqC.onMqttConnect(connack));
