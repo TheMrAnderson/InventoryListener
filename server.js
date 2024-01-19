@@ -26,7 +26,7 @@ let args = {
 
 inventory.setupApp(args);
 const clientId = `invlistener_${process.env.USERNAME}_${getMyIPAddress()}`
-log.debug('ClientId', clientId);
+log.verbose('ClientId', clientId);
 
 g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
 	{
