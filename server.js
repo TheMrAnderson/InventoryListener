@@ -29,7 +29,7 @@ inventory.setupApp(args);
 
 // Create a unique identifier for this instance, then hash it for security purposes
 const clientId = `invlistener_${process.env.USERNAME}_${g.Globals.invConsumeTopic}_${g.Globals.dataFolder}`
-const clientIdHash = crypto.createHash('sha1').update(clientId).digest('hex');
+const clientIdHash = crypto.createHash('sha256').update(clientId).digest('base64');
 log.verbose('ClientId', clientIdHash);
 
 g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
