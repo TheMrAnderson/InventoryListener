@@ -4,6 +4,7 @@ RUN mkdir -p -v /data && chown node /data/
 WORKDIR /usr/src/app
 COPY ./package*.json /usr/src/app/
 RUN npm install --force
+RUN apt-get update && apt-get install -y iputils-ping
 # If you are building your code for production
 # RUN npm ci --only=production
 
