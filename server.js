@@ -5,6 +5,7 @@ const inventory = require('./src/inventory');
 const mqtt = require('mqtt');
 const mqC = require('./src/helpers/mqtt_connect');
 const { onMqttMessage } = require('./src/helpers/mqtt_message');
+const crypto = require('crypto');
 require('dotenv').config();
 
 // Begin reading from stdin so the process does not exit
@@ -25,12 +26,15 @@ let args = {
 };
 
 inventory.setupApp(args);
-const clientId = `invlistener_${process.env.USERNAME}_${getMyIPAddress()}`
-log.verbose('ClientId', clientId);
+
+// Create a unique identifier for this instance, then hash it for security purposes
+const clientId = `invlistener_${process.env.USERNAME}_${g.Globals.invConsumeTopic}_${g.Globals.dataFolder}`
+const clientIdHash = crypto.createHash('sha1').update(clientId).digest('hex');
+log.verbose('ClientId', clientIdHash);
 
 g.Globals.mqttClient = mqtt.connect(g.Globals.mqttServerAddress,
 	{
-		clientId: clientId,
+		clientId: clientIdHash,
 		clean: false,
 		reconnectPeriod: 5000,
 		SessionExpiryInterval: 0,
@@ -59,7 +63,3 @@ p.on('SIGTERM', () => {
 p.on('SIGINT', () => {
 	cleanup();
 })
-
-function getMyIPAddress() {
-	return require('child_process').execSync("ifconfig | grep inet | grep -v inet6 | awk '{gsub(/addr:/,\"\");print $2}'").toString().trim().split("\n");
-}
