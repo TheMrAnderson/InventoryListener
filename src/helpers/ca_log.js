@@ -1,11 +1,19 @@
 const g = require('../global');
 const m = require('./mqtt_publish');
 
-const error = async (message, err, data) => {
+const trace = async (message, data) => {
 	try {
-		await logHelper(message, err, data, 'Error');
+		await logHelper(message, null, data, 'Trace');
 	} catch (err) {
-		console.log('Error in ca_log.error', err);
+		console.log('Error in ca_log.trace', err);
+	}
+}
+
+const debug = async (message, data) => {
+	try {
+		await logHelper(message, null, data, 'Debug');
+	} catch (err) {
+		console.log('Error in ca_log.verbose', err);
 	}
 }
 
@@ -17,11 +25,11 @@ const verbose = async (message, data) => {
 	}
 }
 
-const debug = async (message, data) => {
+const error = async (message, err, data) => {
 	try {
-		await logHelper(message, null, data, 'Debug');
+		await logHelper(message, err, data, 'Error');
 	} catch (err) {
-		console.log('Error in ca_log.verbose', err);
+		console.log('Error in ca_log.error', err);
 	}
 }
 
@@ -75,7 +83,14 @@ function logToConsole(message) {
 	console.log(message);
 }
 
+// Logging Levels
+// Trace - most fine grained
+// Debug - very detailed
+// Verbose
+// Error
+
 module.exports = {
+	trace,
 	debug,
 	verbose,
 	error
