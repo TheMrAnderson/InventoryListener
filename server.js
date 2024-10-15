@@ -50,6 +50,8 @@ g.Globals.mqttClient.on('error', (err) => mqC.onMqttError(err));
 
 g.Globals.mqttClient.on('message', (topic, message, packet) => onMqttMessage(topic, message, packet));
 
+inventory.pushShoppingList();
+
 const cleanup = () => {
 	log.verbose('App Ended');
 	g.Globals.mqttClient.end();

@@ -325,7 +325,7 @@ const updateShoppingList = async (listData) => {
 	log.debug('updateShoppingList', listData);
 	shoppingList = listData;
 	await files.writeJsonFile(shoppingListFullPath, shoppingList);
-	await m.publishShoppingList(shoppingList);
+	await pushShoppingList();
 };
 
 /**
@@ -422,6 +422,11 @@ const handleFileData = async (filename, data) => {
 	}
 }
 
+const pushShoppingList = async () => {
+	await getShoppingList();
+	m.publishShoppingList(shoppingList);
+}
+
 /**
  * Callback method from pushInvUpdatedEvent
  * @param {object} data Inventory object
@@ -477,5 +482,6 @@ module.exports = {
 	shoppingListJob,
 	updateJob,
 	addToShoppingList,
-	externalShoppingListUpdate
+	externalShoppingListUpdate,
+	pushShoppingList
 };
